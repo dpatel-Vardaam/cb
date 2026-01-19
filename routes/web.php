@@ -1,15 +1,17 @@
 <?php
 
-use App\Http\Controllers\Auth\SocialLoginController;
-use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ListingController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\Auth\SocialLoginController;
 
-Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
-})->name('home');
+Route::get('/', HomeController::class)->name('home');
+
+// Category routes
+Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -27,4 +29,18 @@ Route::middleware('guest')->group(function () {
         ->name('social.callback');
 });
 
-require __DIR__.'/settings.php';
+// Protected listing routes (require authentication) - MUST come before wildcard routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('listings/create', [ListingController::class, 'create'])->name('listings.create');
+    Route::post('listings', [ListingController::class, 'store'])->name('listings.store');
+    Route::get('listings/{listing}/edit', [ListingController::class, 'edit'])->name('listings.edit');
+    Route::put('listings/{listing}', [ListingController::class, 'update'])->name('listings.update');
+    Route::patch('listings/{listing}', [ListingController::class, 'update']);
+    Route::delete('listings/{listing}', [ListingController::class, 'destroy'])->name('listings.destroy');
+});
+
+// Public listing routes (wildcard routes come last)
+Route::get('listings', [ListingController::class, 'index'])->name('listings.index');
+Route::get('listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
+
+require __DIR__ . '/settings.php';
