@@ -2,21 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 use Laravel\Scout\Searchable;
 
 class Listing extends Model
 {
-        protected $fillable = [
-        'uuid',
+    use Searchable;
+
+    protected $fillable = [
+        'id',
         'user_id',
         'category_id',
         'title',
         'description',
         'price',
-        'location',
+        'state',
+        'city',
         'species',
         'morph',
         'age',
@@ -27,8 +30,13 @@ class Listing extends Model
         'is_delivery_available',
     ];
 
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
     protected $appends = [
         'image_urls',
+        'uuid',
     ];
 
     protected $casts = [
@@ -38,9 +46,28 @@ class Listing extends Model
         'is_delivery_available' => 'boolean',
     ];
 
-    public function getRouteKeyName(): string
+    public function toSearchableArray(): array
     {
-        return 'uuid';
+        return [
+            'id' => (string) $this->id,
+
+            // searchable text
+            'title' => $this->title,
+            'description' => $this->description,
+
+            // 🔥 FILTERABLE FIELDS (TOP-LEVEL ONLY)
+            'status' => $this->status,
+            'category_id' => (string) $this->category_id,
+            'user_id' => (string) $this->user_id,
+            'is_negotiable' => (bool) $this->is_negotiable,
+            'is_delivery_available' => (bool) $this->is_delivery_available,
+
+            // optional searchable data
+            'price' => (float) $this->price,
+            'state' => $this->state,
+            'city' => $this->city,
+            'species' => $this->species,
+        ];
     }
 
     protected static function boot()
@@ -48,8 +75,8 @@ class Listing extends Model
         parent::boot();
 
         static::creating(function ($listing) {
-            if (empty($listing->uuid)) {
-                $listing->uuid = Str::uuid()->toString();
+            if (empty($listing->id)) {
+                $listing->id = Str::uuid()->toString();
             }
         });
     }
@@ -71,7 +98,12 @@ class Listing extends Model
         }
 
         return array_map(function ($image) {
-            return asset('storage/listings/' . $this->uuid . '/' . $image);
+            return '/storage/listings/'.$this->id.'/'.$image;
         }, $this->images);
+    }
+
+    public function getUuidAttribute(): string
+    {
+        return (string) $this->id;
     }
 }

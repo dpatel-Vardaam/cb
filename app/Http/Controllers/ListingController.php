@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
-use App\Models\Listing;
 use App\Models\Category;
-use Illuminate\Support\Str;
+use App\Models\Listing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class ListingController extends Controller
 {
@@ -17,46 +17,64 @@ class ListingController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Listing::with(['category', 'user'])->latest();
+        // Search query (optional)
+        $searchQuery = $request->input('q', '');
 
+        // Default filters
+        $filters = [];
+
+        // Mine / Marketplace logic
         if ($request->boolean('mine') && $request->user()) {
-            $query->where('user_id', $request->user()->id);
+            $filters[] = "user_id = {$request->user()->id}";
         } else {
-            $query->where('status', 'active');
+            $filters[] = 'status = active';
         }
 
         // Filters
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->input('category_id'));
+        if ($request->filled('category_id') && $request->category_id !== 'all') {
+            $filters[] = "category_id = {$request->category_id}";
         }
 
         if ($request->filled('location')) {
-            $query->where('location', 'like', '%' . $request->input('location') . '%');
+            // NOTE: MeiliSearch does not support LIKE
+            // You can use exact match or implement searchable location
+            $filters[] = "location = \"{$request->location}\"";
         }
 
-        if ($request->filled('min_price') && is_numeric($request->input('min_price'))) {
-            $query->where('price', '>=', $request->input('min_price'));
+        if ($request->filled('min_price') && is_numeric($request->min_price)) {
+            $filters[] = "price >= {$request->min_price}";
         }
 
-        if ($request->filled('max_price') && is_numeric($request->input('max_price'))) {
-            $query->where('price', '<=', $request->input('max_price'));
+        if ($request->filled('max_price') && is_numeric($request->max_price)) {
+            $filters[] = "price <= {$request->max_price}";
         }
 
         if ($request->boolean('negotiable')) {
-            $query->where('is_negotiable', true);
+            $filters[] = 'is_negotiable = true';
         }
 
         if ($request->boolean('delivery')) {
-            $query->where('is_delivery_available', true);
+            $filters[] = 'is_delivery_available = true';
         }
 
-        $listings = $query->paginate(12)->withQueryString();
-        // dd($listings);
-        $categories = Category::orderBy('title')->get(['id', 'title']);
+        // Scout MeiliSearch query
+        $query = Listing::search($searchQuery);
+
+        if (! empty($filters)) {
+            $query->options([
+                'filter' => implode(' AND ', $filters),
+            ]);
+        }
+
+        // Paginate results
+        $listings = $query->paginate(12);
+
+        $categories = Category::orderBy('title', 'asc')->get(['id', 'title']);
 
         return Inertia::render('listing/Index', [
             'listings' => $listings,
             'filters' => $request->only([
+                'q',
                 'category_id',
                 'location',
                 'min_price',
@@ -92,6 +110,8 @@ class ListingController extends Controller
             'description' => 'required|string|max:5000',
             'price' => 'required|numeric|min:0|max:9999999.99',
             'location' => 'required|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
             'species' => 'nullable|string|max:255',
             'morph' => 'nullable|string|max:255',
             'age' => 'nullable|string|max:100',
@@ -108,23 +128,26 @@ class ListingController extends Controller
         // Handle image uploads
         $imageNames = [];
         if ($request->hasFile('images')) {
-            $storagePath = 'listings/' . $uuid;
+            $storagePath = 'listings/'.$uuid;
 
             foreach ($request->file('images') as $image) {
-                $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+                $filename = Str::uuid().'.'.$image->getClientOriginalExtension();
                 $image->storeAs($storagePath, $filename, 'public');
                 $imageNames[] = $filename;
             }
         }
+        // dd($validated);
         // Create the listing
         $listing = Listing::create([
-            'uuid' => $uuid,
+            'id' => $uuid,
             'user_id' => Auth::id(),
             'category_id' => $validated['category_id'],
             'title' => $validated['title'],
             'description' => $validated['description'],
             'price' => $validated['price'],
             'location' => $validated['location'],
+            'state' => $validated['state'] ?? null,
+            'city' => $validated['city'] ?? null,
             'species' => $validated['species'] ?? null,
             'morph' => $validated['morph'] ?? null,
             'age' => $validated['age'] ?? null,
@@ -185,6 +208,8 @@ class ListingController extends Controller
             'description' => 'required|string|max:5000',
             'price' => 'required|numeric|min:0|max:9999999.99',
             'location' => 'required|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
             'species' => 'nullable|string|max:255',
             'morph' => 'nullable|string|max:255',
             'age' => 'nullable|string|max:100',
@@ -197,11 +222,11 @@ class ListingController extends Controller
 
         // Handle new image uploads if any
         if ($request->hasFile('images')) {
-            $storagePath = 'listings/' . $listing->uuid;
+            $storagePath = 'listings/'.$listing->id;
             $imageNames = $listing->images ?? [];
 
             foreach ($request->file('images') as $image) {
-                $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+                $filename = Str::uuid().'.'.$image->getClientOriginalExtension();
                 $image->storeAs($storagePath, $filename, 'public');
                 $imageNames[] = $filename;
             }
@@ -209,7 +234,11 @@ class ListingController extends Controller
             $validated['images'] = array_slice($imageNames, 0, 10); // Keep max 10 images
         }
 
-        $listing->update($validated);
+        $listing->update(array_merge($validated, [
+            'images' => $validated['images'] ?? $listing->images,
+            'is_negotiable' => $validated['is_negotiable'] ?? false,
+            'is_delivery_available' => $validated['is_delivery_available'] ?? false,
+        ]));
 
         return redirect()->route('listings.show', $listing)
             ->with('success', 'Your listing has been updated successfully!');
@@ -226,8 +255,8 @@ class ListingController extends Controller
         }
 
         // Delete images from storage
-        if (!empty($listing->images)) {
-            $storagePath = 'listings/' . $listing->uuid;
+        if (! empty($listing->images)) {
+            $storagePath = 'listings/'.$listing->id;
             Storage::disk('public')->deleteDirectory($storagePath);
         }
 

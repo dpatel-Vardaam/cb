@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
-use Laravel\Scout\Searchable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
+use Laravel\Scout\Searchable;
 
 class Category extends Model
 {
@@ -41,6 +42,28 @@ class Category extends Model
         'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    public function listings(): HasMany
+    {
+        return $this->hasMany(Listing::class);
+    }
+
+    public function toSearchableArray(): array
+    {
+        $this->loadMissing('listings:id,category_id,title,state,city,species');
+
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'listings' => $this->listings->map(fn ($listing) => [
+                'title' => $listing->title,
+                'state' => $listing->state,
+                'city' => $listing->city,
+                'species' => $listing->species,
+            ])->all(),
+        ];
+    }
 
     /**
      * Boot the model.

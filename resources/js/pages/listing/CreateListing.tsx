@@ -9,18 +9,19 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import ReactSelect, { SingleValue, StylesConfig } from 'react-select';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
+    Select as UiSelect,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { home } from '@/routes';
@@ -47,11 +48,21 @@ type FormData = {
     is_negotiable: boolean;
     is_delivery_available: boolean;
     images: File[];
+    state: string;
+    city: string;
 };
+
+type Option = { label: string; value: string };
 
 export default function CreateListing({ categories }: CreateListingProps) {
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [isDragging, setIsDragging] = useState(false);
+    const [states, setStates] = useState<Option[]>([]);
+    const [cities, setCities] = useState<Option[]>([]);
+    const [isLoadingStates, setIsLoadingStates] = useState(false);
+    const [isLoadingCities, setIsLoadingCities] = useState(false);
+    const [stateError, setStateError] = useState<string | null>(null);
+    const [cityError, setCityError] = useState<string | null>(null);
 
     const { data, setData, post, processing, errors, progress } =
         useForm<FormData>({
@@ -67,7 +78,143 @@ export default function CreateListing({ categories }: CreateListingProps) {
             is_negotiable: false,
             is_delivery_available: false,
             images: [],
+            state: '',
+            city: '',
         });
+
+    // Compose location from city/state for the backend field expected
+    useEffect(() => {
+        if (data.state || data.city) {
+            const composed = [data.city, data.state].filter(Boolean).join(', ');
+            setData('location', composed);
+        }
+    }, [data.state, data.city, setData]);
+
+    // Fetch US states once
+    useEffect(() => {
+        const fetchStates = async () => {
+            try {
+                setIsLoadingStates(true);
+                setStateError(null);
+                const res = await fetch(
+                    'https://countriesnow.space/api/v0.1/countries/states',
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ country: 'United States' }),
+                    },
+                );
+
+                const json = await res.json();
+                if (json?.data?.states) {
+                    setStates(
+                        json.data.states.map((s: any) => ({
+                            label: s.name,
+                            value: s.name,
+                        })),
+                    );
+                } else {
+                    setStateError('Unable to load states');
+                }
+            } catch (error) {
+                setStateError('Unable to load states');
+            } finally {
+                setIsLoadingStates(false);
+            }
+        };
+
+        fetchStates();
+    }, []);
+
+    const selectedState = data.state;
+
+    // Fetch cities when state changes
+    useEffect(() => {
+        if (!selectedState) {
+            setCities([]);
+            return;
+        }
+
+        const fetchCities = async () => {
+            try {
+                setIsLoadingCities(true);
+                setCityError(null);
+                const res = await fetch(
+                    'https://countriesnow.space/api/v0.1/countries/state/cities',
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            country: 'United States',
+                            state: selectedState,
+                        }),
+                    },
+                );
+
+                const json = await res.json();
+                if (json?.data) {
+                    setCities(
+                        (json.data as string[]).map((c: string) => ({
+                            label: c,
+                            value: c,
+                        })),
+                    );
+                } else {
+                    setCityError('Unable to load cities');
+                }
+            } catch (error) {
+                setCityError('Unable to load cities');
+            } finally {
+                setIsLoadingCities(false);
+            }
+        };
+
+        fetchCities();
+    }, [selectedState]);
+
+    const composedLocation = useMemo(
+        () => [data.city, data.state].filter(Boolean).join(', '),
+        [data.city, data.state],
+    );
+
+    const selectStyles: StylesConfig<Option, false> = {
+        control: (base: any) => ({
+            ...base,
+            backgroundColor: '#1a1a24',
+            borderColor: 'rgba(255,255,255,0.1)',
+            minHeight: '48px',
+            color: 'white',
+            cursor: 'pointer',
+            zIndex: 50,
+        }),
+        singleValue: (base: any) => ({
+            ...base,
+            color: 'white',
+        }),
+        menu: (base: any) => ({
+            ...base,
+            backgroundColor: '#1a1a24',
+        }),
+        option: (base: any, state: any) => ({
+            ...base,
+            backgroundColor: state.isFocused
+                ? 'rgba(16,185,129,0.2)'
+                : 'transparent',
+            color: 'white',
+        }),
+        placeholder: (base: any) => ({
+            ...base,
+            color: 'rgba(255,255,255,0.5)',
+        }),
+        input: (base: any) => ({
+            ...base,
+            color: 'white',
+        }),
+        menuPortal: (base) => ({
+            ...base,
+            zIndex: 9999, // 🔥 critical
+        }),
+    };
 
     const handleImageChange = useCallback(
         (files: FileList | null) => {
@@ -146,7 +293,7 @@ export default function CreateListing({ categories }: CreateListingProps) {
 
             {/* Background Effects */}
             <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f] via-[#0d0d14] to-[#0a0a0f]" />
+                <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0f] via-[#0d0d14] to-[#0a0a0f]" />
                 <div className="absolute -top-40 left-1/4 h-150 w-150 animate-pulse rounded-full bg-emerald-500/8 blur-[150px]" />
                 <div
                     className="absolute top-1/3 -right-20 h-125 w-125 rounded-full bg-violet-500/8 blur-[150px]"
@@ -348,13 +495,13 @@ export default function CreateListing({ categories }: CreateListingProps) {
                                         Category{' '}
                                         <span className="text-red-400">*</span>
                                     </Label>
-                                    <Select
+                                    <UiSelect
                                         value={data.category_id}
                                         onValueChange={(value) =>
                                             setData('category_id', value)
                                         }
                                     >
-                                        <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white">
+                                        <SelectTrigger className="h-12 cursor-pointer border-white/10 bg-white/5 text-white">
                                             <SelectValue placeholder="Select a category" />
                                         </SelectTrigger>
                                         <SelectContent className="border-white/10 bg-[#1a1a24] text-white">
@@ -368,7 +515,7 @@ export default function CreateListing({ categories }: CreateListingProps) {
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
-                                    </Select>
+                                    </UiSelect>
                                     {errors.category_id && (
                                         <p className="text-sm text-red-400">
                                             {errors.category_id}
@@ -421,21 +568,102 @@ export default function CreateListing({ categories }: CreateListingProps) {
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="location">
-                                    Location{' '}
+                            <div className="space-y-3">
+                                <Label>
+                                    Location (USA){' '}
                                     <span className="text-red-400">*</span>
                                 </Label>
+                                <div className="grid gap-3 md:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-zinc-400 uppercase">
+                                            State
+                                        </Label>
+                                        <ReactSelect
+                                            isClearable
+                                            isLoading={isLoadingStates}
+                                            options={states}
+                                            value={
+                                                states.find(
+                                                    (s) =>
+                                                        s.value === data.state,
+                                                ) ?? null
+                                            }
+                                            onChange={(
+                                                option: SingleValue<Option>,
+                                            ) => {
+                                                setData(
+                                                    'state',
+                                                    option?.value || '',
+                                                );
+                                                setData('city', '');
+                                            }}
+                                            styles={selectStyles}
+                                            placeholder={
+                                                isLoadingStates
+                                                    ? 'Loading states...'
+                                                    : 'Select state'
+                                            }
+                                            menuPortalTarget={document.body}
+                                            menuPosition="fixed"
+                                        />
+                                        {stateError && (
+                                            <p className="text-sm text-red-400">
+                                                {stateError}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-zinc-400 uppercase">
+                                            City
+                                        </Label>
+                                        <ReactSelect
+                                            isClearable
+                                            isDisabled={
+                                                !data.state || isLoadingCities
+                                            }
+                                            isLoading={isLoadingCities}
+                                            options={cities}
+                                            value={
+                                                cities.find(
+                                                    (c) =>
+                                                        c.value === data.city,
+                                                ) ?? null
+                                            }
+                                            onChange={(
+                                                option: SingleValue<Option>,
+                                            ) =>
+                                                setData(
+                                                    'city',
+                                                    option?.value || '',
+                                                )
+                                            }
+                                            styles={selectStyles}
+                                            placeholder={
+                                                !data.state
+                                                    ? 'Select state first'
+                                                    : isLoadingCities
+                                                      ? 'Loading cities...'
+                                                      : 'Select city'
+                                            }
+                                            menuPortalTarget={document.body}
+                                            menuPosition="fixed"
+                                        />
+                                        {cityError && (
+                                            <p className="text-sm text-red-400">
+                                                {cityError}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div className="relative">
                                     <MapPin className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-zinc-500" />
                                     <Input
-                                        id="location"
-                                        placeholder="e.g., Mumbai, Maharashtra"
-                                        value={data.location}
-                                        onChange={(e) =>
-                                            setData('location', e.target.value)
-                                        }
-                                        className="h-12 border-white/10 bg-white/5 pl-12 text-white placeholder:text-zinc-500 focus:border-emerald-500/50"
+                                        readOnly
+                                        value={composedLocation}
+                                        placeholder="City, State"
+                                        className="h-12 border-white/10 bg-white/5 pl-12 text-white placeholder:text-zinc-500"
                                     />
                                 </div>
                                 {errors.location && (
@@ -495,7 +723,7 @@ export default function CreateListing({ categories }: CreateListingProps) {
 
                             <div className="space-y-2">
                                 <Label htmlFor="sex">Sex</Label>
-                                <Select
+                                <UiSelect
                                     value={data.sex}
                                     onValueChange={(value) =>
                                         setData('sex', value)
@@ -524,7 +752,7 @@ export default function CreateListing({ categories }: CreateListingProps) {
                                             Unknown
                                         </SelectItem>
                                     </SelectContent>
-                                </Select>
+                                </UiSelect>
                             </div>
                         </div>
                     </div>
@@ -584,7 +812,7 @@ export default function CreateListing({ categories }: CreateListingProps) {
 
                     {/* Info Box */}
                     <div className="flex gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                        <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-400" />
+                        <Info className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
                         <div className="text-sm text-zinc-300">
                             <p className="mb-1 font-medium text-emerald-400">
                                 Tips for a great listing
@@ -624,7 +852,7 @@ export default function CreateListing({ categories }: CreateListingProps) {
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="gap-2 bg-linear-to-r from-emerald-500 to-cyan-500 px-8 text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
+                            className="gap-2 bg-linear-to-r from-emerald-500 to-cyan-500 px-8 text-white shadow-lg shadow-emerald-500/25 transition-all hover:cursor-pointer hover:shadow-emerald-500/40"
                         >
                             {processing ? (
                                 <>

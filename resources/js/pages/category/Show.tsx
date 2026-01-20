@@ -1,17 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Clock,
-    Heart,
-    MapPin,
-    Search,
-    SlidersHorizontal,
-    Sparkles,
-} from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Clock, Heart, MapPin, Sparkles } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { SnakeBadge } from '@/components/ui/snake-badge';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
@@ -64,6 +58,7 @@ type PaginatedListings = {
 type CategoryShowProps = {
     category: Category;
     listings: PaginatedListings;
+    filters?: Record<string, any>;
 };
 
 function VerticalListingCard({ listing }: { listing: Listing }) {
@@ -212,7 +207,50 @@ function VerticalListingCard({ listing }: { listing: Listing }) {
 export default function CategoryShow({
     category,
     listings,
+    filters = {},
 }: CategoryShowProps) {
+    const [form, setForm] = useState({
+        q: filters.q ?? '',
+        location: filters.location ?? '',
+        min_price: filters.min_price ?? '',
+        max_price: filters.max_price ?? '',
+        negotiable: Boolean(filters.negotiable),
+        delivery: Boolean(filters.delivery),
+    });
+
+    const updateField = (key: keyof typeof form, value: string | boolean) => {
+        setForm((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const submitFilters = () => {
+        router.get(
+            `/categories/${category.slug}`,
+            {
+                ...form,
+                q: form.q || undefined,
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const clearFilters = () => {
+        setForm({
+            q: '',
+            location: '',
+            min_price: '',
+            max_price: '',
+            negotiable: false,
+            delivery: false,
+        });
+        router.get(
+            `/categories/${category.slug}`,
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    const cards = useMemo(() => listings.data, [listings.data]);
+
     return (
         <div className="dark min-h-screen bg-[#0a0a0f] text-white">
             <Head title={`${category.title} - Snake Market`} />
@@ -270,92 +308,208 @@ export default function CategoryShow({
                             </p>
                         </div>
 
-                        {/* Search and Filter */}
-                        <div className="flex gap-2">
-                            <div className="relative">
-                                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                                <Input
-                                    placeholder="Search listings..."
-                                    className="h-10 w-full border-white/10 bg-white/5 pl-10 text-white placeholder:text-zinc-500 focus:border-emerald-500/50 sm:w-60"
-                                />
-                            </div>
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
                             <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-10 w-10 border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                                asChild
+                                className="border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/10"
                             >
-                                <SlidersHorizontal className="h-4 w-4" />
+                                <Link href="/listings/create">
+                                    Post a Listing
+                                </Link>
                             </Button>
                         </div>
                     </div>
                 </div>
 
-                {/* Listings Grid - 3 columns */}
-                {listings.data.length > 0 ? (
-                    <>
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {listings.data.map((listing, index) => (
-                                <div
-                                    key={listing.id}
-                                    className="animate-in duration-500 fade-in slide-in-from-bottom-4"
-                                    style={{
-                                        animationDelay: `${index * 50}ms`,
+                <div className="grid gap-6 lg:grid-cols-[280px,1fr]">
+                    {/* Filters */}
+                    <aside className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm lg:sticky lg:top-20 lg:h-fit">
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs tracking-wide text-zinc-400 uppercase">
+                                    Search
+                                </Label>
+                                <Input
+                                    value={form.q}
+                                    onChange={(e) =>
+                                        updateField('q', e.target.value)
+                                    }
+                                    placeholder="Search listings"
+                                    className="h-10 border-white/10 bg-[#0f0f15] text-white placeholder:text-zinc-500"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') submitFilters();
                                     }}
-                                >
-                                    <VerticalListingCard listing={listing} />
-                                </div>
-                            ))}
-                        </div>
+                                />
+                            </div>
 
-                        {/* Pagination */}
-                        {listings.last_page > 1 && (
-                            <div className="mt-10 flex justify-center">
-                                <div className="flex items-center gap-2">
-                                    {listings.links.map((link, index) => (
-                                        <Link
-                                            key={index}
-                                            href={link.url || '#'}
-                                            className={cn(
-                                                'flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-medium transition-all',
-                                                link.active
-                                                    ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white'
-                                                    : link.url
-                                                      ? 'border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'
-                                                      : 'cursor-not-allowed text-zinc-600',
-                                            )}
-                                            preserveState
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    ))}
+                            <div className="space-y-2">
+                                <Label className="text-xs tracking-wide text-zinc-400 uppercase">
+                                    Location
+                                </Label>
+                                <Input
+                                    value={form.location}
+                                    onChange={(e) =>
+                                        updateField('location', e.target.value)
+                                    }
+                                    placeholder="City or region"
+                                    className="h-10 border-white/10 bg-[#0f0f15] text-white placeholder:text-zinc-500"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <Label className="text-xs tracking-wide text-zinc-400 uppercase">
+                                        Min Price
+                                    </Label>
+                                    <Input
+                                        type="number"
+                                        value={form.min_price}
+                                        onChange={(e) =>
+                                            updateField(
+                                                'min_price',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="0"
+                                        className="h-10 border-white/10 bg-[#0f0f15] text-white placeholder:text-zinc-500"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs tracking-wide text-zinc-400 uppercase">
+                                        Max Price
+                                    </Label>
+                                    <Input
+                                        type="number"
+                                        value={form.max_price}
+                                        onChange={(e) =>
+                                            updateField(
+                                                'max_price',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="100000"
+                                        className="h-10 border-white/10 bg-[#0f0f15] text-white placeholder:text-zinc-500"
+                                    />
                                 </div>
                             </div>
-                        )}
-                    </>
-                ) : (
-                    /* Empty State */
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/5">
-                            <Sparkles className="h-10 w-10 text-zinc-600" />
+
+                            <div className="flex flex-col gap-2">
+                                <label className="flex items-center gap-2 text-sm text-white">
+                                    <Checkbox
+                                        checked={form.negotiable}
+                                        onCheckedChange={(checked) =>
+                                            updateField(
+                                                'negotiable',
+                                                Boolean(checked),
+                                            )
+                                        }
+                                        className="border-white/20 bg-[#0f0f15] hover:cursor-pointer"
+                                    />
+                                    Negotiable
+                                </label>
+                                <label className="flex items-center gap-2 text-sm text-white">
+                                    <Checkbox
+                                        checked={form.delivery}
+                                        onCheckedChange={(checked) =>
+                                            updateField(
+                                                'delivery',
+                                                Boolean(checked),
+                                            )
+                                        }
+                                        className="border-white/20 bg-[#0f0f15] hover:cursor-pointer"
+                                    />
+                                    Delivery
+                                </label>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <Button
+                                    onClick={submitFilters}
+                                    className="flex-1 bg-linear-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25 hover:cursor-pointer"
+                                >
+                                    Apply
+                                </Button>
+                                <Button
+                                    onClick={clearFilters}
+                                    variant="outline"
+                                    className="flex-1 border-white/30 text-white hover:cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/10"
+                                >
+                                    Reset
+                                </Button>
+                            </div>
                         </div>
-                        <h3 className="text-xl font-semibold text-white">
-                            No listings yet
-                        </h3>
-                        <p className="mt-2 max-w-sm text-zinc-500">
-                            Be the first to list in {category.title}! Create a
-                            listing and reach thousands of buyers.
-                        </p>
-                        <Button
-                            asChild
-                            className="mt-6 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
-                        >
-                            <Link href="/listings/create">
-                                Create a Listing
-                            </Link>
-                        </Button>
-                    </div>
-                )}
+                    </aside>
+
+                    {/* Listings Grid - 3 columns */}
+                    {cards.length > 0 ? (
+                        <section className="space-y-6">
+                            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                {cards.map((listing, index) => (
+                                    <div
+                                        key={listing.id}
+                                        className="animate-in duration-500 fade-in slide-in-from-bottom-4"
+                                        style={{
+                                            animationDelay: `${index * 50}ms`,
+                                        }}
+                                    >
+                                        <VerticalListingCard
+                                            listing={listing}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Pagination */}
+                            {listings.last_page > 1 && (
+                                <div className="mt-6 flex justify-center">
+                                    <div className="flex items-center gap-2">
+                                        {listings.links.map((link, index) => (
+                                            <Link
+                                                key={index}
+                                                href={link.url || '#'}
+                                                className={cn(
+                                                    'flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-medium transition-all',
+                                                    link.active
+                                                        ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white'
+                                                        : link.url
+                                                          ? 'border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'
+                                                          : 'cursor-not-allowed text-zinc-600',
+                                                )}
+                                                preserveState
+                                                dangerouslySetInnerHTML={{
+                                                    __html: link.label,
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+                    ) : (
+                        /* Empty State */
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/5">
+                                <Sparkles className="h-10 w-10 text-zinc-600" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-white">
+                                No listings yet
+                            </h3>
+                            <p className="mt-2 max-w-sm text-zinc-500">
+                                Be the first to list in {category.title}! Create
+                                a listing and reach thousands of buyers.
+                            </p>
+                            <Button
+                                asChild
+                                className="mt-6 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
+                            >
+                                <Link href="/listings/create">
+                                    Create a Listing
+                                </Link>
+                            </Button>
+                        </div>
+                    )}
+                </div>
             </main>
         </div>
     );
