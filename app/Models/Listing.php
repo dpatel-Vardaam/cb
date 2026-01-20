@@ -37,6 +37,11 @@ class Listing extends Model
         'is_delivery_available' => 'boolean',
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     protected static function boot()
     {
         parent::boot();

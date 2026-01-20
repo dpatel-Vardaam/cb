@@ -15,15 +15,57 @@ class ListingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $listings = Listing::with(['category', 'user'])
-            ->where('status', 'active')
-            ->latest()
-            ->paginate(12);
+        $query = Listing::with(['category', 'user'])->latest();
+
+        if ($request->boolean('mine') && $request->user()) {
+            $query->where('user_id', $request->user()->id);
+        } else {
+            $query->where('status', 'active');
+        }
+
+        // Filters
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->input('category_id'));
+        }
+
+        if ($request->filled('location')) {
+            $query->where('location', 'like', '%' . $request->input('location') . '%');
+        }
+
+        if ($request->filled('min_price') && is_numeric($request->input('min_price'))) {
+            $query->where('price', '>=', $request->input('min_price'));
+        }
+
+        if ($request->filled('max_price') && is_numeric($request->input('max_price'))) {
+            $query->where('price', '<=', $request->input('max_price'));
+        }
+
+        if ($request->boolean('negotiable')) {
+            $query->where('is_negotiable', true);
+        }
+
+        if ($request->boolean('delivery')) {
+            $query->where('is_delivery_available', true);
+        }
+
+        $listings = $query->paginate(12)->withQueryString();
+
+        $categories = Category::orderBy('title')->get(['id', 'title']);
 
         return Inertia::render('listing/Index', [
             'listings' => $listings,
+            'filters' => $request->only([
+                'category_id',
+                'location',
+                'min_price',
+                'max_price',
+                'negotiable',
+                'delivery',
+                'mine',
+            ]),
+            'categories' => $categories,
         ]);
     }
 

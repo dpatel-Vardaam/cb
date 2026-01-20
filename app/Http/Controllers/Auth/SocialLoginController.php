@@ -47,7 +47,7 @@ class SocialLoginController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->intended('/dashboard');
+        return redirect()->intended('/');
     }
 
     protected function guardProvider(string $provider): void

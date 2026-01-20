@@ -2,15 +2,27 @@ import { Head, Link, usePage } from '@inertiajs/react';
 
 import { CategoryCard } from '@/components/categoryCard';
 import { ListingCard } from '@/components/listingCard';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { home, login, register } from '@/routes';
 import { type SharedData } from '@/types';
+import Header from '@/components/header';
 import {
     ArrowRight,
+    LayoutDashboard,
+    LogOut,
     MapPin,
     Plus,
     Search,
+    Settings,
     ShieldCheck,
     Sparkles,
     Star,
@@ -29,13 +41,31 @@ type CategoryItem = {
 };
 
 type Listing = {
-    id: string;
+    id: number;
+    uuid: string;
     title: string;
-    category: string;
-    price: number;
+    description: string;
+    price: string;
     location: string;
-    posted: string;
-    badges?: string[];
+    species: string | null;
+    morph: string | null;
+    age: string | null;
+    sex: string;
+    images: string[] | null;
+    status: string;
+    is_negotiable: boolean;
+    is_delivery_available: boolean;
+    created_at: string;
+    image_urls?: string[];
+    user?: {
+        id: number;
+        name: string;
+    };
+    category?: {
+        id: number;
+        title: string;
+        slug: string;
+    };
 };
 
 // Fallback categories if none from DB
@@ -90,45 +120,6 @@ const defaultCategories: CategoryItem[] = [
     },
 ];
 
-const sampleListings: Listing[] = [
-    {
-        id: '1',
-        title: 'Pastel Clown Ball Python (2024, feeding well)',
-        category: 'Ball Pythons',
-        price: 45000,
-        location: 'Bengaluru',
-        posted: 'Today',
-        badges: ['Verified seller'],
-    },
-    {
-        id: '2',
-        title: 'Normal Corn Snake (beginner friendly)',
-        category: 'Corn Snakes',
-        price: 8500,
-        location: 'Hyderabad',
-        posted: '1 day ago',
-        badges: ['Pickup'],
-    },
-    {
-        id: '3',
-        title: '6x2x2 PVC enclosure w/ radiant heat panel',
-        category: 'Enclosures',
-        price: 26000,
-        location: 'Chennai',
-        posted: '3 days ago',
-        badges: ['Delivery'],
-    },
-    {
-        id: '4',
-        title: 'Boa constrictor (female, ~5ft, calm temperament)',
-        category: 'Boas',
-        price: 39000,
-        location: 'Pune',
-        posted: '1 week ago',
-        badges: ['Negotiable'],
-    },
-];
-
 const stats = [
     { icon: Users, label: 'Active Sellers', value: '2,500+' },
     { icon: TrendingUp, label: 'Listings', value: '15,000+' },
@@ -137,15 +128,59 @@ const stats = [
 
 type HomeProps = {
     categories: CategoryItem[];
+    listings: Listing[];
     canRegister?: boolean;
+    userHasListings?: boolean;
 };
 
-const Home = ({ categories, canRegister = true }: HomeProps) => {
+const Home = ({
+    categories,
+    listings = [],
+    canRegister = true,
+    userHasListings = false,
+}: HomeProps) => {
     const { auth } = usePage<SharedData>().props;
-    console.log(categories);
+
     // Use categories from DB or fallback to defaults
     const displayCategories =
         categories && categories.length > 0 ? categories : defaultCategories;
+
+    // Helper to format relative time
+    const formatRelativeTime = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        return date.toLocaleDateString();
+    };
+
+    // Transform listings to ListingCard format
+    const transformedListings = listings.map((listing) => {
+        const badges: string[] = [];
+        if (listing.is_negotiable) badges.push('Negotiable');
+        if (listing.is_delivery_available) badges.push('Delivery');
+
+        const imageName = listing.images?.[0];
+        const image = imageName
+            ? `/storage/listings/${listing.uuid}/${imageName}`
+            : undefined;
+
+        return {
+            uuid: listing.uuid,
+            title: listing.title,
+            category: listing.category?.title ?? 'Uncategorized',
+            price: parseFloat(listing.price),
+            location: listing.location,
+            posted: formatRelativeTime(listing.created_at),
+            badges,
+            image,
+        };
+    });
 
     return (
         <div className="dark min-h-screen bg-[#0a0a0f] text-white">
@@ -189,58 +224,7 @@ const Home = ({ categories, canRegister = true }: HomeProps) => {
             </div>
 
             {/* Header */}
-            <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-2xl">
-                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-                    <div className="flex items-center gap-3">
-                        <Link
-                            href={home()}
-                            className="group flex items-center gap-3"
-                        >
-                            <div className="relative flex h-10 w-10 items-center justify-center">
-                                {/* Glow effect */}
-                                <div className="absolute inset-0 rounded-xl bg-linear-to-br from-emerald-400 to-cyan-400 opacity-75 blur-md transition-opacity group-hover:opacity-100" />
-                                <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-emerald-400 to-cyan-400 text-white shadow-lg shadow-emerald-500/25">
-                                    <Sparkles className="h-5 w-5" />
-                                </div>
-                            </div>
-                            <div className="grid leading-tight">
-                                <span className="text-base font-bold tracking-tight text-white">
-                                    Snake Market
-                                </span>
-                                <span className="text-xs text-zinc-500">
-                                    India's #1 Reptile Marketplace
-                                </span>
-                            </div>
-                        </Link>
-                    </div>
-
-                    <nav className="flex items-center gap-3">
-                        {!auth.user && (
-                            <>
-                                <Button
-                                    asChild
-                                    variant="ghost"
-                                    className="text-zinc-400 hover:bg-white/5 hover:text-white"
-                                >
-                                    <Link href={login()}>Log in</Link>
-                                </Button>
-                                {canRegister && (
-                                    <Button
-                                        asChild
-                                        className="relative overflow-hidden bg-linear-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
-                                    >
-                                        <Link href={register()}>
-                                            <span className="relative z-10">
-                                                Get Started
-                                            </span>
-                                        </Link>
-                                    </Button>
-                                )}
-                            </>
-                        )}
-                    </nav>
-                </div>
-            </header>
+            <Header />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-12">
                 <div className="grid gap-20">
@@ -418,20 +402,19 @@ const Home = ({ categories, canRegister = true }: HomeProps) => {
                                     Fresh arrivals from the community
                                 </p>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-2 border-white/10 bg-white/5 text-white hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400"
+                            <Link
+                                href="/listings"
+                                className="flex items-center rounded-2xl px-3 py-2 shadow-sm shadow-stone-300 gap-2 border-white/10 bg-white/5 text-white hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400"
                             >
                                 Browse all
                                 <ArrowRight className="h-4 w-4" />
-                            </Button>
+                            </Link>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
-                            {sampleListings.map((item, index) => (
+                            {transformedListings.map((item, index) => (
                                 <div
-                                    key={item.id}
+                                    key={item.uuid}
                                     className="animate-in duration-700 fade-in slide-in-from-bottom-4"
                                     style={{
                                         animationDelay: `${index * 100}ms`,
@@ -443,35 +426,37 @@ const Home = ({ categories, canRegister = true }: HomeProps) => {
                         </div>
                     </section>
 
-                    {/* CTA Section */}
-                    <section className="relative overflow-hidden rounded-3xl">
-                        {/* Background effects */}
-                        <div className="absolute inset-0 bg-linear-to-br from-emerald-500/20 via-[#12121a] to-cyan-500/20" />
-                        <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-emerald-500/20 blur-[100px]" />
-                        <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-cyan-500/20 blur-[100px]" />
+                    {/* CTA Section - Only show if user hasn't listed anything */}
+                    {!userHasListings && (
+                        <section className="relative overflow-hidden rounded-3xl">
+                            {/* Background effects */}
+                            <div className="absolute inset-0 bg-linear-to-br from-emerald-500/20 via-[#12121a] to-cyan-500/20" />
+                            <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-emerald-500/20 blur-[100px]" />
+                            <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-cyan-500/20 blur-[100px]" />
 
-                        <div className="relative border border-white/10 p-8 md:p-12">
-                            <div className="grid gap-6 text-center md:grid-cols-[1fr_auto] md:items-center md:text-left">
-                                <div>
-                                    <h3 className="text-2xl font-bold text-white md:text-3xl">
-                                        Ready to sell?
-                                    </h3>
-                                    <p className="mt-3 text-lg text-zinc-400">
-                                        List your snakes, enclosures, or
-                                        supplies and reach thousands of
-                                        enthusiasts.
-                                    </p>
+                            <div className="relative border border-white/10 p-8 md:p-12">
+                                <div className="grid gap-6 text-center md:grid-cols-[1fr_auto] md:items-center md:text-left">
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white md:text-3xl">
+                                            Ready to sell?
+                                        </h3>
+                                        <p className="mt-3 text-lg text-zinc-400">
+                                            List your snakes, enclosures, or
+                                            supplies and reach thousands of
+                                            enthusiasts.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        size="lg"
+                                        className="gap-2 bg-linear-to-r from-emerald-500 to-cyan-500 px-8 py-6 text-lg text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
+                                    >
+                                        <Plus className="h-5 w-5" />
+                                        Post your first listing
+                                    </Button>
                                 </div>
-                                <Button
-                                    size="lg"
-                                    className="gap-2 bg-linear-to-r from-emerald-500 to-cyan-500 px-8 py-6 text-lg text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
-                                >
-                                    <Plus className="h-5 w-5" />
-                                    Post your first listing
-                                </Button>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    )}
                 </div>
             </main>
 

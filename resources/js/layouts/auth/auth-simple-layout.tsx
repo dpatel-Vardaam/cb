@@ -1,8 +1,4 @@
-import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
-
-import AppLogoIcon from '@/components/app-logo-icon';
-import { home } from '@/routes';
 
 interface AuthLayoutProps {
     name?: string;
@@ -16,30 +12,9 @@ export default function AuthSimpleLayout({
     description,
 }: PropsWithChildren<AuthLayoutProps>) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
-                        >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
-                        </Link>
-
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
-                        </div>
-                    </div>
-                    {children}
-                </div>
-            </div>
+        <div className="dark relative flex min-h-svh flex-col items-center justify-center gap-6 bg-[#0a0a0f] p-6 text-white md:p-10">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(700px_circle_at_50%_-10%,rgba(16,185,129,0.18),transparent_60%)]" />
+            <div className="relative z-10 w-full max-w-sm">{children}</div>
         </div>
     );
 }

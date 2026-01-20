@@ -1,12 +1,11 @@
 <?php
 
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ListingController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\Auth\SocialLoginController;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', HomeController::class)->name('home');
 
@@ -43,4 +42,4 @@ Route::middleware(['auth'])->group(function () {
 Route::get('listings', [ListingController::class, 'index'])->name('listings.index');
 Route::get('listings/{listing}', [ListingController::class, 'show'])->name('listings.show');
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';
