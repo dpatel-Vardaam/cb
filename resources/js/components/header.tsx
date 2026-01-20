@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { home, login, register } from '@/routes';
 import { type SharedData } from '@/types';
+
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import {

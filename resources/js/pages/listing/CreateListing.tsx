@@ -1,16 +1,14 @@
-import { US_STATES } from '@/data/states';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     ImagePlus,
     Info,
     Loader2,
-    MapPin,
     Sparkles,
     Upload,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import LocationSelector from '@/components/location-selector'; // <--- IMPORT THIS
 import { Button } from '@/components/ui/button';
@@ -72,18 +70,6 @@ export default function CreateListing({ categories }: CreateListingProps) {
             state: '',
             city: '',
         });
-
-
-    const stateNameMap = US_STATES.reduce<Record<string, string>>((acc, s) => {
-        acc[s.code.toUpperCase()] = s.name;
-        return acc;
-    }, {});
-
-    const formatCityName = (city?: string | null) =>
-        city ? city.replace(/[_-]/g, ' ') : '';
-
-    const getStateName = (code?: string | null) =>
-        code ? (stateNameMap[code.toUpperCase()] ?? code) : '';
 
     const handleImageChange = useCallback(
         (files: FileList | null) => {

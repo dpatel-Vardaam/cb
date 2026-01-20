@@ -60,7 +60,6 @@ class ListingController extends Controller
 
         $listings = $query->paginate(12);
         $categories = Category::orderBy('title', 'asc')->get(['id', 'title']);
-
         return Inertia::render('listing/Index', [
             'listings' => $listings,
             'filters' => $request->only([

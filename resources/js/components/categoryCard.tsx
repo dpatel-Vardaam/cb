@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
+import { ChevronRight } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { ChevronRight } from 'lucide-react';
 
 interface CategoryCardProps {
     title: string;

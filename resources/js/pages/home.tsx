@@ -1,11 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-
-import { CategoryCard } from '@/components/categoryCard';
-import Header from '@/components/header';
-import { ListingCard } from '@/components/listingCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { type SharedData } from '@/types';
+import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
     MapPin,
@@ -18,6 +11,12 @@ import {
     Users,
     Zap,
 } from 'lucide-react';
+
+import { CategoryCard } from '@/components/categoryCard';
+import Header from '@/components/header';
+import { ListingCard } from '@/components/listingCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type CategoryItem = {
     id: string;
@@ -57,57 +56,7 @@ type Listing = {
     };
 };
 
-// ... (Default Categories constant remains the same) ...
-const defaultCategories: CategoryItem[] = [
-    {
-        id: '1',
-        title: 'Ball Pythons',
-        slug: 'ball-pythons',
-        description: 'Morphs, pairs, proven breeders',
-        icon: null,
-        image: null,
-    },
-    {
-        id: '2',
-        title: 'Corn Snakes',
-        slug: 'corn-snakes',
-        description: 'Pets, projects, hatchlings',
-        icon: null,
-        image: null,
-    },
-    {
-        id: '3',
-        title: 'Boas',
-        slug: 'boas',
-        description: 'Localities, morph combos, adults',
-        icon: null,
-        image: null,
-    },
-    {
-        id: '4',
-        title: 'Enclosures',
-        slug: 'enclosures',
-        description: 'Racks, tubs, PVC cages, heat',
-        icon: null,
-        image: null,
-    },
-    {
-        id: '5',
-        title: 'Feeders',
-        slug: 'feeders',
-        description: 'Frozen/thawed, live, bulk deals',
-        icon: null,
-        image: null,
-    },
-    {
-        id: '6',
-        title: 'Supplies',
-        slug: 'supplies',
-        description: 'Substrate, hides, thermostats',
-        icon: null,
-        image: null,
-    },
-];
+
 
 const stats = [
     { icon: Users, label: 'Active Sellers', value: '2,500+' },
@@ -118,22 +67,14 @@ const stats = [
 type HomeProps = {
     categories: CategoryItem[];
     listings: Listing[];
-    canRegister?: boolean;
     userHasListings?: boolean;
 };
 
 const Home = ({
     categories,
     listings = [],
-    canRegister = true,
     userHasListings = false,
 }: HomeProps) => {
-    const { auth } = usePage<SharedData>().props;
-
-    // Use categories from DB or fallback to defaults
-    const displayCategories =
-        categories && categories.length > 0 ? categories : defaultCategories;
-
     // Helper to format relative time
     const formatRelativeTime = (dateString: string) => {
         const date = new Date(dateString);

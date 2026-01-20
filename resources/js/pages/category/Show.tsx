@@ -62,7 +62,16 @@ type PaginatedListings = {
 type CategoryShowProps = {
     category: Category;
     listings: PaginatedListings;
-    filters?: Record<string, any>;
+    filters?: Record<string, unknown>;
+};
+
+type FiltersState = {
+    q: string;
+    location: string;
+    min_price: string;
+    max_price: string;
+    negotiable: boolean;
+    delivery: boolean;
 };
 
 function VerticalListingCard({ listing }: { listing: Listing }) {
@@ -213,11 +222,11 @@ export default function CategoryShow({
     listings,
     filters = {},
 }: CategoryShowProps) {
-    const [form, setForm] = useState({
-        q: filters.q ?? '',
-        location: filters.location ?? '',
-        min_price: filters.min_price ?? '',
-        max_price: filters.max_price ?? '',
+    const [form, setForm] = useState<FiltersState>({
+        q: (filters.q as string | undefined) ?? '',
+        location: (filters.location as string | undefined) ?? '',
+        min_price: (filters.min_price as string | undefined) ?? '',
+        max_price: (filters.max_price as string | undefined) ?? '',
         negotiable: Boolean(filters.negotiable),
         delivery: Boolean(filters.delivery),
     });
@@ -232,6 +241,7 @@ export default function CategoryShow({
             {
                 ...form,
                 q: form.q || undefined,
+                location: form.location || undefined,
             },
             { preserveState: true, preserveScroll: true },
         );
@@ -246,11 +256,10 @@ export default function CategoryShow({
             negotiable: false,
             delivery: false,
         });
-        router.get(
-            `/categories/${category.slug}`,
-            {},
-            { preserveState: true, preserveScroll: true },
-        );
+        router.get(`/categories/${category.slug}`, undefined, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const cards = useMemo(() => listings.data, [listings.data]);

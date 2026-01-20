@@ -23,7 +23,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-
 import {
     Sheet,
     SheetContent,
@@ -74,14 +73,19 @@ export type Listing = {
     };
 };
 
-// ... (PaginatedResponse and formatRelativeTime remain the same) ...
+type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
+
 type PaginatedResponse<T> = {
     data: T[];
     current_page: number;
     last_page: number;
     per_page: number;
     total: number;
-    links: any[];
+    links: PaginationLink[];
     next_page_url?: string | null;
     prev_page_url?: string | null;
 };
@@ -89,130 +93,38 @@ type PaginatedResponse<T> = {
 type ListingsIndexProps = {
     listings: PaginatedResponse<Listing>;
     categories: { id: number; title: string }[];
-    filters?: Record<string, any>;
+    filters?: Record<string, unknown>;
 };
 
-const slugify = (value: string) =>
-    value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+type FiltersState = {
+    q: string;
+    category_id: string;
+    state: string;
+    city: string;
+    min_price: string;
+    max_price: string;
+    negotiable: boolean;
+    delivery: boolean;
+};
 
-function formatRelativeTime(dateString: string) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+type FilterContentProps = {
+    form: FiltersState;
+    categories: { id: number; title: string }[];
+    updateField: (key: keyof FiltersState, value: string | boolean) => void;
+    setForm: React.Dispatch<React.SetStateAction<FiltersState>>;
+    submitFilters: () => void;
+    clearFilters: () => void;
+};
 
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return date.toLocaleDateString('en-US');
-}
-
-export default function ListingsIndex({
-    listings,
+function FilterContent({
+    form,
     categories,
-    filters = {},
-}: ListingsIndexProps) {
-    const page = usePage();
-    const isMine = useMemo(() => page.url?.includes('mine=1'), [page.url]);
-
-    const [openFilters, setOpenFilters] = useState(false);
-
-    // 1. UPDATED STATE: Replaced 'location' with 'state' and 'city'
-    const [form, setForm] = useState({
-        q: filters.q ?? '',
-        category_id: filters.category_id ? String(filters.category_id) : 'all',
-        state: filters.state ?? '',
-        city: filters.city ?? '',
-        min_price: filters.min_price ?? '',
-        max_price: filters.max_price ?? '',
-        negotiable: Boolean(filters.negotiable),
-        delivery: Boolean(filters.delivery),
-    });
-
-    // Helper for simple fields
-    const updateField = (key: keyof typeof form, value: string | boolean) => {
-        setForm((prev) => ({ ...prev, [key]: value }));
-    };
-
-    // 2. UPDATED SUBMIT: Includes state and city
-    const submitFilters = () => {
-        router.get(
-            '/listings',
-            {
-                ...form,
-                category_id:
-                    form.category_id === 'all' ? undefined : form.category_id,
-                q: form.q || undefined,
-                state: form.state || undefined,
-                city: form.city || undefined,
-                mine: filters.mine,
-            },
-            { preserveScroll: true, preserveState: true },
-        );
-        setOpenFilters(false);
-    };
-
-    // 3. UPDATED CLEAR: Resets state and city
-    const clearFilters = () => {
-        setForm({
-            q: '',
-            category_id: 'all',
-            state: '',
-            city: '',
-            min_price: '',
-            max_price: '',
-            negotiable: false,
-            delivery: false,
-        });
-        router.get(
-            '/listings',
-            { mine: filters.mine },
-            { preserveScroll: true, preserveState: true },
-        );
-        setOpenFilters(false);
-    };
-
-    const cards = listings.data.map((listing) => {
-        const badges: string[] = [];
-        if (listing.is_negotiable) badges.push('Negotiable');
-        if (listing.is_delivery_available) badges.push('Delivery');
-
-        const coverImage =
-            listing.image_urls?.[0] ||
-            (listing.images?.[0]
-                ? `/storage/listings/${listing.uuid}/${listing.images[0]}`
-                : undefined);
-
-        return {
-            uuid: listing.uuid,
-            title: listing.title,
-            category: listing.category?.title ?? 'Uncategorized',
-            price: parseFloat(listing.price),
-            state: listing.state,
-            city: listing.city,
-            url:
-                listing.seo_url ??
-                (listing.slug
-                    ? `/listing/${slugify(listing.state)}/${slugify(
-                          listing.city,
-                      )}/${slugify(
-                          listing.category?.slug ??
-                              listing.category?.title ??
-                              'reptiles',
-                      )}/${listing.slug}`
-                    : '#'),
-            posted: formatRelativeTime(listing.created_at),
-            badges,
-            image: coverImage,
-        };
-    });
-
-    const FilterContent = () => (
+    updateField,
+    setForm,
+    submitFilters,
+    clearFilters,
+}: FilterContentProps) {
+    return (
         <div className="space-y-6">
             <div className="space-y-2">
                 <p className="text-xs font-semibold tracking-[0.12em] text-emerald-400 uppercase">
@@ -255,7 +167,6 @@ export default function ListingsIndex({
                 <p className="text-xs font-semibold tracking-[0.12em] text-emerald-400 uppercase">
                     Location
                 </p>
-                {/* 4. REPLACED INPUT WITH LOCATION SELECTOR */}
                 <LocationSelector
                     initialState={form.state}
                     initialCity={form.city}
@@ -269,7 +180,6 @@ export default function ListingsIndex({
                 <p className="text-xs font-semibold tracking-[0.12em] text-emerald-400 uppercase">
                     Price
                 </p>
-                {/* ... Price Inputs (Same as before) ... */}
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                         <Label className="text-[11px] text-zinc-400 uppercase">
@@ -364,6 +274,139 @@ export default function ListingsIndex({
             </div>
         </div>
     );
+}
+
+const slugify = (value: string) =>
+    value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+function formatRelativeTime(dateString: string) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString('en-US');
+}
+
+export default function ListingsIndex({
+    listings,
+    categories,
+    filters = {},
+}: ListingsIndexProps) {
+    const page = usePage();
+    const isMine = useMemo(() => page.url?.includes('mine=1'), [page.url]);
+
+    const [openFilters, setOpenFilters] = useState(false);
+
+    // 1. UPDATED STATE: Replaced 'location' with 'state' and 'city'
+    const [form, setForm] = useState<FiltersState>({
+        q: (filters.q as string | undefined) ?? '',
+        category_id: filters.category_id ? String(filters.category_id) : 'all',
+        state: (filters.state as string | undefined) ?? '',
+        city: (filters.city as string | undefined) ?? '',
+        min_price: (filters.min_price as string | undefined) ?? '',
+        max_price: (filters.max_price as string | undefined) ?? '',
+        negotiable: Boolean(filters.negotiable),
+        delivery: Boolean(filters.delivery),
+    });
+
+    // Helper for simple fields
+    const updateField = (key: keyof typeof form, value: string | boolean) => {
+        setForm((prev) => ({ ...prev, [key]: value }));
+    };
+
+    // 2. UPDATED SUBMIT: Includes state and city
+    const submitFilters = () => {
+        router.get(
+            '/listings',
+            {
+                ...form,
+                category_id:
+                    form.category_id === 'all' ? undefined : form.category_id,
+                q: form.q || undefined,
+                state: form.state || undefined,
+                city: form.city || undefined,
+                mine:
+                    typeof filters.mine === 'boolean'
+                        ? filters.mine
+                        : filters.mine
+                          ? Boolean(filters.mine)
+                          : undefined,
+            },
+            { preserveScroll: true, preserveState: true },
+        );
+        setOpenFilters(false);
+    };
+
+    // 3. UPDATED CLEAR: Resets state and city
+    const clearFilters = () => {
+        setForm({
+            q: '',
+            category_id: 'all',
+            state: '',
+            city: '',
+            min_price: '',
+            max_price: '',
+            negotiable: false,
+            delivery: false,
+        });
+        router.get(
+            '/listings',
+            {
+                mine:
+                    typeof filters.mine === 'boolean'
+                        ? filters.mine
+                        : filters.mine
+                          ? Boolean(filters.mine)
+                          : undefined,
+            },
+            { preserveScroll: true, preserveState: true },
+        );
+        setOpenFilters(false);
+    };
+
+    const cards = listings.data.map((listing) => {
+        const badges: string[] = [];
+        if (listing.is_negotiable) badges.push('Negotiable');
+        if (listing.is_delivery_available) badges.push('Delivery');
+
+        const coverImage =
+            listing.image_urls?.[0] ||
+            (listing.images?.[0]
+                ? `/storage/listings/${listing.uuid}/${listing.images[0]}`
+                : undefined);
+
+        return {
+            uuid: listing.uuid,
+            title: listing.title,
+            category: listing.category?.title ?? 'Uncategorized',
+            price: parseFloat(listing.price),
+            state: listing.state,
+            city: listing.city,
+            url:
+                listing.seo_url ??
+                (listing.slug
+                    ? `/listing/${slugify(listing.state)}/${slugify(
+                          listing.city,
+                      )}/${slugify(
+                          listing.category?.slug ??
+                              listing.category?.title ??
+                              'reptiles',
+                      )}/${listing.slug}`
+                    : '#'),
+            posted: formatRelativeTime(listing.created_at),
+            badges,
+            image: coverImage,
+        };
+    });
 
     // ... The rest of your return statement (Header, Main, Grid) remains exactly the same ...
     return (
@@ -435,7 +478,14 @@ export default function ListingsIndex({
                                 </SheetTitle>
                             </SheetHeader>
                             <div className="mt-6">
-                                <FilterContent />
+                                <FilterContent
+                                    form={form}
+                                    categories={categories}
+                                    updateField={updateField}
+                                    setForm={setForm}
+                                    submitFilters={submitFilters}
+                                    clearFilters={clearFilters}
+                                />
                             </div>
                         </SheetContent>
                     </Sheet>
@@ -443,7 +493,14 @@ export default function ListingsIndex({
                     {/* Filter + Listings Grid */}
                     <div className="grid gap-6 md:grid-cols-[260px_1fr] lg:grid-cols-[300px_1fr]">
                         <aside className="hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm md:block lg:sticky lg:top-20 lg:h-fit">
-                            <FilterContent />
+                            <FilterContent
+                                form={form}
+                                categories={categories}
+                                updateField={updateField}
+                                setForm={setForm}
+                                submitFilters={submitFilters}
+                                clearFilters={clearFilters}
+                            />
                         </aside>
 
                         <section className="space-y-6">

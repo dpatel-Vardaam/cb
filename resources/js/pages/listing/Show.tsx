@@ -1,4 +1,3 @@
-import { US_STATES } from '@/data/states';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -20,6 +19,7 @@ import { useState } from 'react';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { SnakeBadge } from '@/components/ui/snake-badge';
+import { US_STATES } from '@/data/states';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 

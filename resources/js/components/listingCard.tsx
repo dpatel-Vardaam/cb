@@ -1,12 +1,12 @@
-import { Button } from '@/components/ui/button';
-import { SnakeBadge } from '@/components/ui/snake-badge';
-import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
 import { ChevronRight, Clock, Heart, MapPin } from 'lucide-react';
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { SnakeBadge } from '@/components/ui/snake-badge';
+import { cn } from '@/lib/utils';
+
 interface ListingCardProps {
-    uuid: string;
     title: string;
     url: string;
     category: string;
@@ -28,7 +28,6 @@ function getBadgeVariant(badge: string) {
 }
 
 export function ListingCard({
-    uuid,
     title,
     url,
     category,

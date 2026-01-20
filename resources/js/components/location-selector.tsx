@@ -1,6 +1,7 @@
-import { US_STATES } from '@/data/states';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Select, { SingleValue, StylesConfig } from 'react-select';
+
+import { US_STATES } from '@/data/states';
 
 // 1. Define Option Type for React Select
 type OptionType = {
@@ -32,6 +33,39 @@ export default function LocationSelector({
         [],
     );
 
+    const loadCities = useCallback(
+        async (stateCode: string, preselectCityName?: string) => {
+            setIsLoading(true);
+            try {
+                // Lazy load the JSON
+                const module = await import('@/data/cities.json');
+                const rawCities: string[] =
+                    (module.default as Record<string, string[]>)[stateCode] ||
+                    [];
+
+                // Transform strings to React Select format
+                const options = rawCities.map((city) => ({
+                    value: city,
+                    label: city,
+                }));
+                setCityOptions(options);
+
+                // If we have an initial city, set it now that options are loaded
+                if (preselectCityName) {
+                    const cityObj = options.find(
+                        (c) => c.value === preselectCityName,
+                    );
+                    if (cityObj) setSelectedCity(cityObj);
+                }
+            } catch (error) {
+                console.error('Failed to load cities', error);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [],
+    );
+
     // 3. Initialize from Props (Run once on mount)
     useEffect(() => {
         if (initialState) {
@@ -43,39 +77,7 @@ export default function LocationSelector({
                 loadCities(stateObj.value, initialCity);
             }
         }
-    }, [initialState]);
-
-    const loadCities = async (
-        stateCode: string,
-        preselectCityName?: string,
-    ) => {
-        setIsLoading(true);
-        try {
-            // Lazy load the JSON
-            const module = await import('@/data/cities.json');
-            // @ts-ignore - Typescript might complain about dynamic key access
-            const rawCities: string[] = module.default[stateCode] || [];
-
-            // Transform strings to React Select format
-            const options = rawCities.map((city) => ({
-                value: city,
-                label: city,
-            }));
-            setCityOptions(options);
-
-            // If we have an initial city, set it now that options are loaded
-            if (preselectCityName) {
-                const cityObj = options.find(
-                    (c) => c.value === preselectCityName,
-                );
-                if (cityObj) setSelectedCity(cityObj);
-            }
-        } catch (error) {
-            console.error('Failed to load cities', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [initialCity, initialState, loadCities, stateOptions]);
 
     const handleStateChange = (option: SingleValue<OptionType>) => {
         setSelectedState(option);

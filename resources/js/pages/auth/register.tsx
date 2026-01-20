@@ -55,7 +55,7 @@ export default function Register() {
         if (!match) return '';
         try {
             return decodeURIComponent(match.split('=')[1]);
-        } catch (_e) {
+        } catch {
             return '';
         }
     }, []);
