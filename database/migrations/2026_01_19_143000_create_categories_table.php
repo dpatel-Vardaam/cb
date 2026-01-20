@@ -21,11 +21,6 @@ return new class extends Migration
             // Replace emoji with image
             $table->string('image')->nullable(); // store image path or URL
 
-            $table->string('gradient')
-                ->nullable()
-                ->default('from-emerald-500/20 to-cyan-500/20');
-
-            $table->string('icon')->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
 

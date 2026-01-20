@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('listings', function (Blueprint $table) {
-            $table->id();
-            $table->uuid('uuid')->unique();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('category_id')->constrained('categories')->cascadeOnDelete();
             $table->string('title');
             $table->text('description');
             $table->decimal('price', 10, 2);
-            $table->string('location');
+            $table->string('state');
+            $table->string('city');
             $table->string('species')->nullable();
             $table->string('morph')->nullable();
             $table->string('age')->nullable();

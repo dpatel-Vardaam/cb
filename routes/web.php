@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\SmsVerificationController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ListingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', HomeController::class)->name('home');
+Route::get('/', HomeController::class)->middleware('verified.home')->name('home');
 
 // Category routes
 Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');

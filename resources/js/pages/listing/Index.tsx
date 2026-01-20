@@ -1,9 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, ArrowRight, Filter, ListChecks } from 'lucide-react';
+import {
+    ArrowLeft,
+    ArrowRight,
+    Clock,
+    Filter,
+    ListChecks,
+    MapPin,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import Header from '@/components/header';
-import { ListingCard } from '@/components/listingCard';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -197,21 +203,26 @@ export default function ListingsIndex({
                                 </Link>
                             </Button>
                             {!showFilters ? (
-                            <Button
-                                type="button"
-                                onClick={() => setShowFilters((prev) => !prev)}
-                                className="border-white/20 text-white hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:cursor-pointer"
-                            >
-                                <Filter className="mr-2 h-4 w-4" /> Filters
-                            </Button>
-                            ):(
-                            <Button
-                                type="button"
-                                onClick={() => setShowFilters((prev) => !prev)}
-                                className="border-white/20 text-white hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:cursor-pointer"
-                            >
-                                <Filter className="mr-2 h-4 w-4" /> Close Filters
-                            </Button>
+                                <Button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowFilters((prev) => !prev)
+                                    }
+                                    className="border-white/20 text-white hover:cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/10"
+                                >
+                                    <Filter className="mr-2 h-4 w-4" /> Filters
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowFilters((prev) => !prev)
+                                    }
+                                    className="border-white/20 text-white hover:cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/10"
+                                >
+                                    <Filter className="mr-2 h-4 w-4" /> Close
+                                    Filters
+                                </Button>
                             )}
                         </div>
                     </header>
@@ -350,24 +361,65 @@ export default function ListingsIndex({
                     )}
 
                     {/* Listings */}
-                    <section className="grid gap-4 md:grid-cols-2">
-                        {cards.length === 0 ? (
-                            <div className="col-span-full rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-zinc-400">
-                                No listings found.
-                            </div>
-                        ) : (
-                            cards.map((card, index) => (
-                                <div
-                                    key={card.uuid}
-                                    className="animate-in duration-700 fade-in slide-in-from-bottom-4"
-                                    style={{
-                                        animationDelay: `${index * 75}ms`,
-                                    }}
-                                >
-                                    <ListingCard {...card} />
+                    <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                        {cards.map((card) => (
+                            <Link
+                                key={card.uuid}
+                                href={`/listings/${card.uuid}`}
+                                className="group block overflow-hidden rounded-2xl border border-white/10 bg-[#12121a]/80 shadow-lg shadow-emerald-500/5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-emerald-500/20"
+                            >
+                                <div className="relative h-52 w-full overflow-hidden bg-[#0f0f15]">
+                                    {card.image ? (
+                                        <img
+                                            src={card.image}
+                                            alt={card.title}
+                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center text-zinc-600">
+                                            <MapPin className="h-8 w-8" />
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
+                                    <div className="absolute right-3 bottom-3 left-3 flex items-center justify-between text-sm text-white">
+                                        <span className="rounded-full bg-black/40 px-3 py-1 text-xs font-medium">
+                                            {card.category}
+                                        </span>
+                                        <span className="rounded-full bg-emerald-500/80 px-3 py-1 text-xs font-semibold text-black">
+                                            ₹{card.price.toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
-                            ))
-                        )}
+
+                                <div className="space-y-2 p-4">
+                                    <h3 className="line-clamp-2 text-lg font-semibold text-white transition-colors group-hover:text-emerald-300">
+                                        {card.title}
+                                    </h3>
+                                    <div className="flex items-center justify-between text-sm text-zinc-400">
+                                        <span className="inline-flex items-center gap-1">
+                                            <MapPin className="h-4 w-4" />
+                                            {card.location}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1">
+                                            <Clock className="h-4 w-4" />
+                                            {card.posted}
+                                        </span>
+                                    </div>
+                                    {card.badges.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {card.badges.map((badge) => (
+                                                <span
+                                                    key={badge}
+                                                    className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300"
+                                                >
+                                                    {badge}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </Link>
+                        ))}
                     </section>
 
                     {/* Pagination (Matches Screenshot) */}

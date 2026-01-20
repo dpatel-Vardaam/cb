@@ -51,7 +51,7 @@ class ListingController extends Controller
         }
 
         $listings = $query->paginate(12)->withQueryString();
-
+        // dd($listings);
         $categories = Category::orderBy('title')->get(['id', 'title']);
 
         return Inertia::render('listing/Index', [

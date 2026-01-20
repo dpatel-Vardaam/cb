@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Laravel\Scout\Searchable;
 
 class Listing extends Model
 {
-    protected $fillable = [
+        protected $fillable = [
         'uuid',
         'user_id',
         'category_id',

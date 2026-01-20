@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
+use Laravel\Scout\Searchable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class Category extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids,Searchable;
 
     protected $keyType = 'string';
 
