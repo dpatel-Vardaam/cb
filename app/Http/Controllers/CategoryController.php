@@ -13,7 +13,7 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        $listings = Listing::with(['user'])
+        $listings = Listing::with(['user', 'category'])
             ->where('category_id', $category->id)
             ->where('status', 'active')
             ->latest()

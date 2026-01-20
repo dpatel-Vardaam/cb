@@ -12,84 +12,65 @@ use Inertia\Inertia;
 
 class ListingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // ... index() and create() methods remain the same ...
     public function index(Request $request)
     {
-        // Search query (optional)
+        // ... (Your existing index logic is fine) ...
         $searchQuery = $request->input('q', '');
-
-        // Default filters
         $filters = [];
 
-        // Mine / Marketplace logic
         if ($request->boolean('mine') && $request->user()) {
             $filters[] = "user_id = {$request->user()->id}";
         } else {
             $filters[] = 'status = active';
         }
 
-        // Filters
         if ($request->filled('category_id') && $request->category_id !== 'all') {
             $filters[] = "category_id = {$request->category_id}";
         }
-
         if ($request->filled('location')) {
-            // NOTE: MeiliSearch does not support LIKE
-            // You can use exact match or implement searchable location
             $filters[] = "location = \"{$request->location}\"";
         }
-
+        if ($request->filled('state')) {
+            $filters[] = "state = \"{$request->state}\"";
+        }
+        if ($request->filled('city')) {
+            $filters[] = "city = \"{$request->city}\"";
+        }
         if ($request->filled('min_price') && is_numeric($request->min_price)) {
             $filters[] = "price >= {$request->min_price}";
         }
-
         if ($request->filled('max_price') && is_numeric($request->max_price)) {
             $filters[] = "price <= {$request->max_price}";
         }
-
         if ($request->boolean('negotiable')) {
             $filters[] = 'is_negotiable = true';
         }
-
         if ($request->boolean('delivery')) {
             $filters[] = 'is_delivery_available = true';
         }
 
-        // Scout MeiliSearch query
-        $query = Listing::search($searchQuery);
+        $query = Listing::search($searchQuery)->query(fn ($eloquent) => $eloquent->with('category'));
 
         if (! empty($filters)) {
             $query->options([
                 'filter' => implode(' AND ', $filters),
             ]);
         }
-        // Paginate results
+
         $listings = $query->paginate(12);
-        $listings->load('category');
-        // dd($listings);
         $categories = Category::orderBy('title', 'asc')->get(['id', 'title']);
 
         return Inertia::render('listing/Index', [
             'listings' => $listings,
             'filters' => $request->only([
-                'q',
-                'category_id',
-                'location',
-                'min_price',
-                'max_price',
-                'negotiable',
-                'delivery',
-                'mine',
+                'q', 'category_id', 'location', 'state', 'city',
+                'min_price', 'max_price', 'negotiable', 'delivery', 'mine',
             ]),
             'categories' => $categories,
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $categories = Category::get(['id', 'title']);
@@ -99,19 +80,16 @@ class ListingController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
+        // dd($request);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'description' => 'required|string|max:5000',
             'price' => 'required|numeric|min:0|max:9999999.99',
-            'location' => 'required|string|max:255',
-            'state' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255', // Make sure frontend sends this!
+            'city' => 'nullable|string|max:255',  // Make sure frontend sends this!
             'species' => 'nullable|string|max:255',
             'morph' => 'nullable|string|max:255',
             'age' => 'nullable|string|max:100',
@@ -119,17 +97,14 @@ class ListingController extends Controller
             'is_negotiable' => 'nullable|boolean',
             'is_delivery_available' => 'nullable|boolean',
             'images' => 'nullable|array|max:10',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:15000',
         ]);
 
-        // Generate UUID for the listing
         $uuid = Str::uuid()->toString();
 
-        // Handle image uploads
         $imageNames = [];
         if ($request->hasFile('images')) {
             $storagePath = 'listings/'.$uuid;
-
             foreach ($request->file('images') as $image) {
                 $filename = Str::uuid().'.'.$image->getClientOriginalExtension();
                 $image->storeAs($storagePath, $filename, 'public');
@@ -137,7 +112,6 @@ class ListingController extends Controller
             }
         }
         // dd($validated);
-        // Create the listing
         $listing = Listing::create([
             'id' => $uuid,
             'user_id' => Auth::id(),
@@ -145,7 +119,6 @@ class ListingController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'],
             'price' => $validated['price'],
-            'location' => $validated['location'],
             'state' => $validated['state'] ?? null,
             'city' => $validated['city'] ?? null,
             'species' => $validated['species'] ?? null,
@@ -158,28 +131,40 @@ class ListingController extends Controller
             'status' => 'active',
         ]);
 
-        return redirect()->route('listings.show', $listing)
+        // dd($listing->seo_url);
+        // 🔥 FIX: Load relationship so getSeoUrlAttribute works
+        $listing->refresh()->load('category');
+
+        // 🔥 FIX: Redirect using the SEO URL accessor
+        return redirect($listing->seo_url)
             ->with('success', 'Your listing has been published successfully!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Listing $listing)
+    public function show(string $state, string $city, string $category, Listing $listing)
     {
         $listing->load(['category', 'user']);
 
+        // SEO Canonical Check
+        $correctState = Str::slug($listing->state ?? 'unknown-state');
+        $correctCity = Str::slug($listing->city ?? 'unknown-city');
+        $correctCategory = $listing->category?->slug
+            ?: ($listing->category ? Str::slug($listing->category->title) : 'reptiles');
+
+        if ($state !== $correctState || $city !== $correctCity || $category !== $correctCategory) {
+            return redirect()->to($listing->seo_url, 301);
+        }
+
         return Inertia::render('listing/Show', [
             'listing' => $listing->append('image_urls'),
+            'seo' => [
+                'title' => "{$listing->title} for sale in {$listing->city}, {$listing->state}",
+                'description' => Str::limit($listing->description, 160),
+            ],
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Listing $listing)
     {
-        // Check if user owns this listing
         if ($listing->user_id !== Auth::id()) {
             abort(403, 'You are not authorized to edit this listing.');
         }
@@ -192,12 +177,8 @@ class ListingController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Listing $listing)
     {
-        // Check if user owns this listing
         if ($listing->user_id !== Auth::id()) {
             abort(403, 'You are not authorized to update this listing.');
         }
@@ -217,10 +198,9 @@ class ListingController extends Controller
             'is_negotiable' => 'nullable|boolean',
             'is_delivery_available' => 'nullable|boolean',
             'images' => 'nullable|array|max:10',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:15000',
         ]);
 
-        // Handle new image uploads if any
         if ($request->hasFile('images')) {
             $storagePath = 'listings/'.$listing->id;
             $imageNames = $listing->images ?? [];
@@ -231,36 +211,36 @@ class ListingController extends Controller
                 $imageNames[] = $filename;
             }
 
-            $validated['images'] = array_slice($imageNames, 0, 10); // Keep max 10 images
+            $validated['images'] = array_slice($imageNames, 0, 10);
         }
 
-        $listing->update(array_merge($validated, [
-            'images' => $validated['images'] ?? $listing->images,
-            'is_negotiable' => $validated['is_negotiable'] ?? false,
-            'is_delivery_available' => $validated['is_delivery_available'] ?? false,
-        ]));
+        $listing->fill($validated);
+        $listing->images = $validated['images'] ?? $listing->images;
+        $listing->is_negotiable = $validated['is_negotiable'] ?? false;
+        $listing->is_delivery_available = $validated['is_delivery_available'] ?? false;
+        $listing->save();
 
-        return redirect()->route('listings.show', $listing)
+        // 🔥 FIX: Load relationship again in case category changed
+        $listing->refresh()->load('category');
+
+        // 🔥 FIX: Redirect using SEO URL
+        return redirect($listing->seo_url)
             ->with('success', 'Your listing has been updated successfully!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    // ... destroy() method remains the same ...
     public function destroy(Listing $listing)
     {
-        // Check if user owns this listing
         if ($listing->user_id !== Auth::id()) {
             abort(403, 'You are not authorized to delete this listing.');
         }
 
-        // Delete images from storage
         if (! empty($listing->images)) {
             $storagePath = 'listings/'.$listing->id;
             Storage::disk('public')->deleteDirectory($storagePath);
         }
 
-        $listing->delete();
+        Listing::destroy($listing->getKey());
 
         return redirect()->route('listings.index')
             ->with('success', 'Your listing has been deleted successfully!');

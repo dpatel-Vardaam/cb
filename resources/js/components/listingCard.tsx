@@ -8,6 +8,7 @@ import { useState } from 'react';
 interface ListingCardProps {
     uuid: string;
     title: string;
+    url: string;
     category: string;
     price: number;
     location: string;
@@ -29,6 +30,7 @@ function getBadgeVariant(badge: string) {
 export function ListingCard({
     uuid,
     title,
+    url,
     category,
     price,
     location,
@@ -139,7 +141,7 @@ export function ListingCard({
                         {/* Actions */}
                         <div className="flex items-center justify-between border-t border-white/5 pt-4">
                             <Link
-                                href={`/listings/${uuid}`}
+                                href={url}
                                 className="group inline-flex items-center gap-1 rounded-2xl px-3 py-2 text-zinc-500 transition-colors hover:bg-white/5 hover:text-white"
                             >
                                 <span>View Details</span>

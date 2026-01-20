@@ -45,6 +45,7 @@ type Listing = {
     is_delivery_available: boolean;
     created_at: string;
     image_urls?: string[];
+    seo_url?: string; // <--- ADDED THIS (matches Laravel $appends)
     user?: {
         id: number;
         name: string;
@@ -56,7 +57,7 @@ type Listing = {
     };
 };
 
-// Fallback categories if none from DB
+// ... (Default Categories constant remains the same) ...
 const defaultCategories: CategoryItem[] = [
     {
         id: '1',
@@ -160,6 +161,8 @@ const Home = ({
 
         return {
             uuid: listing.uuid,
+            // Use the SEO URL from backend, fallback to old structure if missing
+            url: listing.seo_url ?? '#',
             title: listing.title,
             category: listing.category?.title ?? 'Uncategorized',
             price: parseFloat(listing.price),
@@ -176,10 +179,7 @@ const Home = ({
 
             {/* Animated Background */}
             <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-                {/* Base gradient */}
                 <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f] via-[#0d0d14] to-[#0a0a0f]" />
-
-                {/* Animated orbs */}
                 <div className="absolute -top-40 left-1/4 h-150 w-150 animate-pulse rounded-full bg-emerald-500/8 blur-[150px]" />
                 <div
                     className="absolute top-1/3 -right-20 h-125 w-125 rounded-full bg-violet-500/8 blur-[150px]"
@@ -191,8 +191,6 @@ const Home = ({
                         animation: 'pulse 5s ease-in-out infinite 1s',
                     }}
                 />
-
-                {/* Grid pattern overlay */}
                 <div
                     className="absolute inset-0 opacity-[0.02]"
                     style={{
@@ -201,8 +199,6 @@ const Home = ({
                         backgroundSize: '50px 50px',
                     }}
                 />
-
-                {/* Noise texture overlay */}
                 <div
                     className="absolute inset-0 opacity-[0.015]"
                     style={{
@@ -211,18 +207,15 @@ const Home = ({
                 />
             </div>
 
-            {/* Header */}
             <Header />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-12">
                 <div className="grid gap-20">
                     {/* Hero Section */}
                     <section className="relative pt-8">
-                        {/* Hero glow */}
                         <div className="pointer-events-none absolute -top-20 left-1/2 h-100 w-200 -translate-x-1/2 rounded-full bg-linear-to-r from-emerald-500/15 via-cyan-500/10 to-violet-500/15 blur-[100px]" />
 
                         <div className="relative z-10 grid gap-8 text-center">
-                            {/* Badge */}
                             <div className="flex justify-center">
                                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-400">
                                     <Zap className="h-4 w-4" />
@@ -253,7 +246,6 @@ const Home = ({
                             {/* Search Card */}
                             <div className="mx-auto w-full max-w-3xl">
                                 <div className="relative">
-                                    {/* Card glow */}
                                     <div className="absolute -inset-0.5 rounded-2xl bg-linear-to-r from-emerald-500/20 via-cyan-500/20 to-violet-500/20 opacity-75 blur-lg" />
 
                                     <div className="relative rounded-2xl border border-white/10 bg-[#12121a]/90 p-6 shadow-2xl backdrop-blur-xl">
@@ -409,6 +401,7 @@ const Home = ({
                                         animationDelay: `${index * 100}ms`,
                                     }}
                                 >
+                                    {/* Now correctly passes 'url' prop via spread */}
                                     <ListingCard {...item} />
                                 </div>
                             ))}

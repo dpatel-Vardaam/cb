@@ -31,12 +31,26 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import { US_STATES } from '@/data/states';
+
+const STATE_NAME_MAP = US_STATES.reduce<Record<string, string>>((acc, s) => {
+    acc[s.code.toUpperCase()] = s.name;
+    return acc;
+}, {});
+
+const formatCityName = (city?: string | null) =>
+    city ? city.replace(/[_-]/g, ' ') : '';
+
+const getStateName = (code?: string | null) =>
+    code ? (STATE_NAME_MAP[code.toUpperCase()] ?? code) : '';
 
 // ... (Your Listing type definition remains the same) ...
 export type Listing = {
     // ... same as your code
     id: number;
     uuid: string;
+    slug?: string;
+    seo_url?: string;
     title: string;
     description: string;
     price: string;
@@ -77,6 +91,13 @@ type ListingsIndexProps = {
     categories: { id: number; title: string }[];
     filters?: Record<string, any>;
 };
+
+const slugify = (value: string) =>
+    value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
 function formatRelativeTime(dateString: string) {
     const date = new Date(dateString);
@@ -174,6 +195,17 @@ export default function ListingsIndex({
             price: parseFloat(listing.price),
             state: listing.state,
             city: listing.city,
+            url:
+                listing.seo_url ??
+                (listing.slug
+                    ? `/listing/${slugify(listing.state)}/${slugify(
+                          listing.city,
+                      )}/${slugify(
+                          listing.category?.slug ??
+                              listing.category?.title ??
+                              'reptiles',
+                      )}/${listing.slug}`
+                    : '#'),
             posted: formatRelativeTime(listing.created_at),
             badges,
             image: coverImage,
@@ -319,13 +351,13 @@ export default function ListingsIndex({
             <div className="flex gap-3">
                 <Button
                     onClick={submitFilters}
-                    className="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25 hover:cursor-pointer"
                 >
                     Apply
                 </Button>
                 <Button
                     onClick={clearFilters}
-                    className="flex-1 border-white/30 text-white hover:border-emerald-500/30 hover:bg-emerald-500/10"
+                    className="flex-1 border-white/30 text-white hover:cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/10"
                 >
                     Reset
                 </Button>
@@ -419,7 +451,7 @@ export default function ListingsIndex({
                                 {cards.map((card) => (
                                     <Link
                                         key={card.uuid}
-                                        href={`/listings/${card.uuid}`}
+                                        href={card.url}
                                         className="group block overflow-hidden rounded-2xl border border-white/10 bg-[#12121a]/80 shadow-lg shadow-emerald-500/5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-emerald-500/20"
                                     >
                                         <div className="relative h-52 w-full overflow-hidden bg-[#0f0f15]">
@@ -457,12 +489,16 @@ export default function ListingsIndex({
                                                     <span className="inline-flex min-w-0 flex-1 items-center gap-1">
                                                         <Map className="h-4 w-4" />
                                                         <span className="truncate">
-                                                            {card.city}
+                                                            {formatCityName(
+                                                                card.city,
+                                                            )}
                                                         </span>
                                                     </span>
                                                     <span className="inline-flex items-center gap-1">
                                                         <MapPin className="h-4 w-4" />
-                                                        {card.state}
+                                                        {getStateName(
+                                                            card.state,
+                                                        )}
                                                     </span>
                                                 </div>
                                                 <span className="inline-flex items-center gap-1">

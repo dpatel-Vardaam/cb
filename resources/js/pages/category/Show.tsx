@@ -22,10 +22,14 @@ type Category = {
 type Listing = {
     id: number;
     uuid: string;
+    slug?: string;
+    seo_url?: string;
     title: string;
     description: string;
     price: string;
     location: string;
+    state?: string;
+    city?: string;
     species: string | null;
     morph: string | null;
     age: string | null;
@@ -88,7 +92,7 @@ function VerticalListingCard({ listing }: { listing: Listing }) {
 
     return (
         <Link
-            href={`/listings/${listing.uuid}`}
+            href={listing.seo_url ?? '#'}
             className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#12121a]/80 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/10"
         >
             {/* Image Container */}

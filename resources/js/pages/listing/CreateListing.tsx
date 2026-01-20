@@ -1,3 +1,4 @@
+import { US_STATES } from '@/data/states';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -40,7 +41,6 @@ type FormData = {
     category_id: string;
     description: string;
     price: string;
-    location: string;
     species: string;
     morph: string;
     age: string;
@@ -62,7 +62,6 @@ export default function CreateListing({ categories }: CreateListingProps) {
             category_id: '',
             description: '',
             price: '',
-            location: '',
             species: '',
             morph: '',
             age: '',
@@ -74,14 +73,17 @@ export default function CreateListing({ categories }: CreateListingProps) {
             city: '',
         });
 
-    // Sync composed location string whenever state/city changes
-    useEffect(() => {
-        const composed = [data.city, data.state].filter(Boolean).join(', ');
-        // Only update if it's different to avoid loops (though useForm handles this well)
-        if (data.location !== composed) {
-            setData('location', composed);
-        }
-    }, [data.state, data.city]);
+
+    const stateNameMap = US_STATES.reduce<Record<string, string>>((acc, s) => {
+        acc[s.code.toUpperCase()] = s.name;
+        return acc;
+    }, {});
+
+    const formatCityName = (city?: string | null) =>
+        city ? city.replace(/[_-]/g, ' ') : '';
+
+    const getStateName = (code?: string | null) =>
+        code ? (stateNameMap[code.toUpperCase()] ?? code) : '';
 
     const handleImageChange = useCallback(
         (files: FileList | null) => {
@@ -455,23 +457,6 @@ export default function CreateListing({ categories }: CreateListingProps) {
                                         }));
                                     }}
                                 />
-
-                                {/* Optional: Read-only verification input */}
-                                <div className="relative">
-                                    <MapPin className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-zinc-500" />
-                                    <Input
-                                        readOnly
-                                        value={data.location}
-                                        placeholder="City, State"
-                                        className="h-12 border-white/10 bg-white/5 pl-12 text-white placeholder:text-zinc-500 focus:ring-0 focus:outline-none"
-                                    />
-                                </div>
-
-                                {errors.location && (
-                                    <p className="text-sm text-red-400">
-                                        {errors.location}
-                                    </p>
-                                )}
                             </div>
                         </div>
                     </div>

@@ -148,6 +148,9 @@ return [
                     'user_id',
                     'is_negotiable',
                     'is_delivery_available',
+                    'price',
+                    'state',
+                    'city',
                 ],
                 'sortableAttributes' => [
                     'price',

@@ -1,3 +1,4 @@
+import { US_STATES } from '@/data/states';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -41,6 +42,8 @@ type Listing = {
     description: string;
     price: string;
     location: string;
+    state: string;
+    city: string;
     species: string | null;
     morph: string | null;
     age: string | null;
@@ -59,6 +62,17 @@ type Listing = {
 type ListingShowProps = {
     listing: Listing;
 };
+
+const STATE_NAME_MAP = US_STATES.reduce<Record<string, string>>((acc, s) => {
+    acc[s.code.toUpperCase()] = s.name;
+    return acc;
+}, {});
+
+const formatCityName = (city?: string | null) =>
+    city ? city.replace(/[_-]/g, ' ') : '';
+
+const getStateName = (code?: string | null) =>
+    code ? (STATE_NAME_MAP[code.toUpperCase()] ?? code) : '';
 
 function ImageCarousel({ images, title }: { images: string[]; title: string }) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -395,9 +409,21 @@ export default function ListingShow({ listing }: ListingShowProps) {
                                             <p className="text-xs text-zinc-500">
                                                 Location
                                             </p>
-                                            <p className="font-medium text-white">
-                                                {listing.location}
-                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium text-white">
+                                                    {formatCityName(
+                                                        listing.city,
+                                                    )}
+                                                </p>
+                                                <span className="text-lg text-white">
+                                                    •
+                                                </span>
+                                                <p className="font-medium text-white">
+                                                    {getStateName(
+                                                        listing.state,
+                                                    )}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
 

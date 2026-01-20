@@ -16,6 +16,7 @@ class Listing extends Model
         'user_id',
         'category_id',
         'title',
+        'slug',
         'description',
         'price',
         'state',
@@ -37,6 +38,7 @@ class Listing extends Model
     protected $appends = [
         'image_urls',
         'uuid',
+        'seo_url',
     ];
 
     protected $casts = [
@@ -78,7 +80,13 @@ class Listing extends Model
             if (empty($listing->id)) {
                 $listing->id = Str::uuid()->toString();
             }
+            $baseSlug = Str::slug($listing->title);
+            $listing->slug = $baseSlug . '-' . strtolower(Str::random(6));
         });
+    }
+    public function getRouteKeyName()
+    {
+        return 'slug';
     }
 
     public function user(): BelongsTo
@@ -105,5 +113,17 @@ class Listing extends Model
     public function getUuidAttribute(): string
     {
         return (string) $this->id;
+    }
+    public function getSeoUrlAttribute(): string
+    {
+        // Safe navigators provided just in case data is missing
+        $state = Str::slug($this->state ?? 'unknown-state');
+        $city = Str::slug($this->city ?? 'unknown-city');
+        
+        // Ensure category relationship is loaded or handle gracefully
+        $category = $this->category?->slug
+            ?: ($this->category ? Str::slug($this->category->title) : 'reptiles');
+
+        return "/listing/{$state}/{$city}/{$category}/{$this->slug}";
     }
 }
