@@ -16,11 +16,11 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { SnakeBadge } from '@/components/ui/snake-badge';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
-import Header from '@/components/header';
 
 type Category = {
     id: number;
@@ -197,7 +197,7 @@ export default function ListingShow({ listing }: ListingShowProps) {
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-IN', {
+        return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -456,10 +456,10 @@ export default function ListingShow({ listing }: ListingShowProps) {
                                             Price
                                         </p>
                                         <p className="mt-1 bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-4xl font-bold text-transparent">
-                                            ₹
+                                            {'$'}
                                             {parseFloat(
                                                 listing.price,
-                                            ).toLocaleString('en-IN')}
+                                            ).toLocaleString('en-US')}
                                         </p>
                                     </div>
                                 </div>

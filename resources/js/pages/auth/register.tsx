@@ -358,7 +358,7 @@ export default function Register() {
                                                 Verified at{' '}
                                                 {new Date(
                                                     verifiedAt,
-                                                ).toLocaleString()}
+                                                ).toLocaleString('en-US')}
                                             </p>
                                         )}
                                     </div>

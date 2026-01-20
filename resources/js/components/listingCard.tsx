@@ -115,7 +115,8 @@ export function ListingCard({
                                 </button>
                                 <div className="text-right">
                                     <div className="bg-linear-to-r from-emerald-300 to-cyan-300 bg-clip-text text-xl font-bold text-transparent">
-                                        ₹{price.toLocaleString()}
+                                        {'$'}
+                                        {price.toLocaleString('en-US')}
                                     </div>
                                 </div>
                             </div>
@@ -139,7 +140,7 @@ export function ListingCard({
                         <div className="flex items-center justify-between border-t border-white/5 pt-4">
                             <Link
                                 href={`/listings/${uuid}`}
-                                className="group inline-flex items-center gap-1 text-zinc-500 transition-colors hover:bg-white/5 hover:text-white px-3 py-2 rounded-2xl"
+                                className="group inline-flex items-center gap-1 rounded-2xl px-3 py-2 text-zinc-500 transition-colors hover:bg-white/5 hover:text-white"
                             >
                                 <span>View Details</span>
                                 <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />

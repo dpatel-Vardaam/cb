@@ -5,11 +5,13 @@ import {
     Clock,
     Filter,
     ListChecks,
+    Map,
     MapPin,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import Header from '@/components/header';
+import LocationSelector from '@/components/location-selector'; // <--- IMPORT THIS
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -30,13 +32,17 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 
+// ... (Your Listing type definition remains the same) ...
 export type Listing = {
+    // ... same as your code
     id: number;
     uuid: string;
     title: string;
     description: string;
     price: string;
     location: string;
+    state: string;
+    city: string;
     species: string | null;
     morph: string | null;
     age: string | null;
@@ -54,6 +60,7 @@ export type Listing = {
     };
 };
 
+// ... (PaginatedResponse and formatRelativeTime remain the same) ...
 type PaginatedResponse<T> = {
     data: T[];
     current_page: number;
@@ -81,7 +88,7 @@ function formatRelativeTime(dateString: string) {
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US');
 }
 
 export default function ListingsIndex({
@@ -94,20 +101,24 @@ export default function ListingsIndex({
 
     const [openFilters, setOpenFilters] = useState(false);
 
+    // 1. UPDATED STATE: Replaced 'location' with 'state' and 'city'
     const [form, setForm] = useState({
         q: filters.q ?? '',
         category_id: filters.category_id ? String(filters.category_id) : 'all',
-        location: filters.location ?? '',
+        state: filters.state ?? '',
+        city: filters.city ?? '',
         min_price: filters.min_price ?? '',
         max_price: filters.max_price ?? '',
         negotiable: Boolean(filters.negotiable),
         delivery: Boolean(filters.delivery),
     });
 
+    // Helper for simple fields
     const updateField = (key: keyof typeof form, value: string | boolean) => {
         setForm((prev) => ({ ...prev, [key]: value }));
     };
 
+    // 2. UPDATED SUBMIT: Includes state and city
     const submitFilters = () => {
         router.get(
             '/listings',
@@ -116,6 +127,8 @@ export default function ListingsIndex({
                 category_id:
                     form.category_id === 'all' ? undefined : form.category_id,
                 q: form.q || undefined,
+                state: form.state || undefined,
+                city: form.city || undefined,
                 mine: filters.mine,
             },
             { preserveScroll: true, preserveState: true },
@@ -123,11 +136,13 @@ export default function ListingsIndex({
         setOpenFilters(false);
     };
 
+    // 3. UPDATED CLEAR: Resets state and city
     const clearFilters = () => {
         setForm({
             q: '',
             category_id: 'all',
-            location: '',
+            state: '',
+            city: '',
             min_price: '',
             max_price: '',
             negotiable: false,
@@ -157,7 +172,8 @@ export default function ListingsIndex({
             title: listing.title,
             category: listing.category?.title ?? 'Uncategorized',
             price: parseFloat(listing.price),
-            location: listing.location,
+            state: listing.state,
+            city: listing.city,
             posted: formatRelativeTime(listing.created_at),
             badges,
             image: coverImage,
@@ -207,11 +223,13 @@ export default function ListingsIndex({
                 <p className="text-xs font-semibold tracking-[0.12em] text-emerald-400 uppercase">
                     Location
                 </p>
-                <Input
-                    value={form.location}
-                    onChange={(e) => updateField('location', e.target.value)}
-                    placeholder="City or region"
-                    className="h-10 border-white/10 bg-[#0f0f15] text-white placeholder:text-zinc-500"
+                {/* 4. REPLACED INPUT WITH LOCATION SELECTOR */}
+                <LocationSelector
+                    initialState={form.state}
+                    initialCity={form.city}
+                    onLocationChange={({ state, city }) => {
+                        setForm((prev) => ({ ...prev, state, city }));
+                    }}
                 />
             </div>
 
@@ -219,6 +237,7 @@ export default function ListingsIndex({
                 <p className="text-xs font-semibold tracking-[0.12em] text-emerald-400 uppercase">
                     Price
                 </p>
+                {/* ... Price Inputs (Same as before) ... */}
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                         <Label className="text-[11px] text-zinc-400 uppercase">
@@ -262,7 +281,8 @@ export default function ListingsIndex({
                                 submitFilters();
                             }}
                         >
-                            Up to ₹{ceil.toLocaleString()}
+                            Up to {'$'}
+                            {ceil.toLocaleString('en-US')}
                         </Button>
                     ))}
                 </div>
@@ -313,6 +333,7 @@ export default function ListingsIndex({
         </div>
     );
 
+    // ... The rest of your return statement (Header, Main, Grid) remains exactly the same ...
     return (
         <>
             <Header />
@@ -320,7 +341,6 @@ export default function ListingsIndex({
                 <Head title={isMine ? 'My Listings' : 'Listings'} />
 
                 <main className="mx-auto w-full max-w-7xl px-4 py-10">
-                    {/* Header */}
                     <header className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                         <div>
                             <p className="text-sm tracking-[0.2em] text-emerald-400 uppercase">
@@ -337,6 +357,7 @@ export default function ListingsIndex({
                         </div>
 
                         <div className="flex items-center gap-2">
+                            {/* ... Buttons ... */}
                             <Button
                                 asChild
                                 className="border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/10"
@@ -370,9 +391,7 @@ export default function ListingsIndex({
                     {/* Mobile Filter Drawer */}
                     <Sheet open={openFilters} onOpenChange={setOpenFilters}>
                         <SheetTrigger asChild>
-                            <Button
-                                className="mb-4 flex items-center gap-2 md:hidden"
-                            >
+                            <Button className="mb-4 flex items-center gap-2 md:hidden">
                                 <Filter className="h-4 w-4" />
                                 Filters
                             </Button>
@@ -389,14 +408,12 @@ export default function ListingsIndex({
                         </SheetContent>
                     </Sheet>
 
-                    {/* Filter + Listings */}
+                    {/* Filter + Listings Grid */}
                     <div className="grid gap-6 md:grid-cols-[260px_1fr] lg:grid-cols-[300px_1fr]">
-                        {/* Filters Sidebar */}
                         <aside className="hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm md:block lg:sticky lg:top-20 lg:h-fit">
                             <FilterContent />
                         </aside>
 
-                        {/* Listings */}
                         <section className="space-y-6">
                             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                                 {cards.map((card) => (
@@ -423,8 +440,10 @@ export default function ListingsIndex({
                                                     {card.category}
                                                 </span>
                                                 <span className="rounded-full bg-emerald-500/80 px-3 py-1 text-xs font-semibold text-black">
-                                                    ₹
-                                                    {card.price.toLocaleString()}
+                                                    ${' '}
+                                                    {card.price.toLocaleString(
+                                                        'en-US',
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
@@ -434,15 +453,24 @@ export default function ListingsIndex({
                                                 {card.title}
                                             </h3>
                                             <div className="flex items-center justify-between text-sm text-zinc-400">
-                                                <span className="inline-flex items-center gap-1">
-                                                    <MapPin className="h-4 w-4" />
-                                                    {card.location}
-                                                </span>
+                                                <div className="flex flex-col space-y-1">
+                                                    <span className="inline-flex min-w-0 flex-1 items-center gap-1">
+                                                        <Map className="h-4 w-4" />
+                                                        <span className="truncate">
+                                                            {card.city}
+                                                        </span>
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <MapPin className="h-4 w-4" />
+                                                        {card.state}
+                                                    </span>
+                                                </div>
                                                 <span className="inline-flex items-center gap-1">
                                                     <Clock className="h-4 w-4" />
                                                     {card.posted}
                                                 </span>
                                             </div>
+
                                             {card.badges.length > 0 && (
                                                 <div className="flex flex-wrap gap-2 pt-1">
                                                     {card.badges.map(

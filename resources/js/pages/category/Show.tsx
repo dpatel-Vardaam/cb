@@ -74,7 +74,7 @@ function VerticalListingCard({ listing }: { listing: Listing }) {
         if (diffDays === 1) return 'Yesterday';
         if (diffDays < 7) return `${diffDays} days ago`;
         if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-        return date.toLocaleDateString();
+        return date.toLocaleDateString('en-US');
     };
 
     const coverImage =
@@ -133,7 +133,7 @@ function VerticalListingCard({ listing }: { listing: Listing }) {
                 <div className="absolute bottom-3 left-3">
                     <div className="rounded-lg bg-black/60 px-3 py-1.5 backdrop-blur-sm">
                         <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-lg font-bold text-transparent">
-                            ₹{parseFloat(listing.price).toLocaleString()}
+                            ${parseFloat(listing.price).toLocaleString('en-US')}
                         </span>
                     </div>
                 </div>

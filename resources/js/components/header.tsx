@@ -58,7 +58,7 @@ export default function Header() {
                                 Snake Market
                             </span>
                             <span className="text-xs text-zinc-500">
-                                India's #1 Reptile Marketplace
+                                USA's #1 Reptile Marketplace
                             </span>
                         </div>
                     </Link>

@@ -65,10 +65,10 @@ class ListingController extends Controller
                 'filter' => implode(' AND ', $filters),
             ]);
         }
-
         // Paginate results
         $listings = $query->paginate(12);
-
+        $listings->load('category');
+        // dd($listings);
         $categories = Category::orderBy('title', 'asc')->get(['id', 'title']);
 
         return Inertia::render('listing/Index', [

@@ -1,28 +1,16 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 
 import { CategoryCard } from '@/components/categoryCard';
-import { ListingCard } from '@/components/listingCard';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { home, login, register } from '@/routes';
-import { type SharedData } from '@/types';
 import Header from '@/components/header';
+import { ListingCard } from '@/components/listingCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { type SharedData } from '@/types';
 import {
     ArrowRight,
-    LayoutDashboard,
-    LogOut,
     MapPin,
     Plus,
     Search,
-    Settings,
     ShieldCheck,
     Sparkles,
     Star,
@@ -156,7 +144,7 @@ const Home = ({
         if (diffDays === 1) return 'Yesterday';
         if (diffDays < 7) return `${diffDays} days ago`;
         if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-        return date.toLocaleDateString();
+        return date.toLocaleDateString('en-US');
     };
 
     // Transform listings to ListingCard format
@@ -239,7 +227,8 @@ const Home = ({
                                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-400">
                                     <Zap className="h-4 w-4" />
                                     <span>
-                                        Trusted by 2,500+ sellers across India
+                                        Trusted by 2,500+ sellers across the
+                                        United States
                                     </span>
                                 </div>
                             </div>
@@ -257,7 +246,7 @@ const Home = ({
                                 <p className="mx-auto max-w-2xl text-lg text-zinc-400 md:text-xl">
                                     Browse local listings, morph projects,
                                     enclosures, and feeders from trusted sellers
-                                    across India.
+                                    across the United States.
                                 </p>
                             </div>
 
@@ -404,7 +393,7 @@ const Home = ({
                             </div>
                             <Link
                                 href="/listings"
-                                className="flex items-center rounded-2xl px-3 py-2 shadow-sm shadow-stone-300 gap-2 border-white/10 bg-white/5 text-white hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400"
+                                className="flex items-center gap-2 rounded-2xl border-white/10 bg-white/5 px-3 py-2 text-white shadow-sm shadow-stone-300 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400"
                             >
                                 Browse all
                                 <ArrowRight className="h-4 w-4" />
@@ -469,8 +458,7 @@ const Home = ({
                                 <Sparkles className="h-4 w-4 text-white" />
                             </div>
                             <span className="text-sm text-zinc-500">
-                                Snake Market — India's premier reptile
-                                classifieds
+                                Snake Market — USA's premier reptile classifieds
                             </span>
                         </div>
                         <div className="flex items-center gap-8 text-sm text-zinc-500">

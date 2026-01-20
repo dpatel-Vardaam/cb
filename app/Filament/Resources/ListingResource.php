@@ -81,7 +81,7 @@ class ListingResource extends Resource
                             ->label('Price')
                             ->numeric()
                             ->required()
-                            ->prefix('₹')
+                            ->prefix('$')
                             ->columnSpan(1),
 
                         TextInput::make('location')
@@ -114,7 +114,7 @@ class ListingResource extends Resource
             ->columns([
                 TextColumn::make('title')->sortable()->searchable(),
                 TextColumn::make('category.title')->label('Category')->sortable()->searchable(),
-                TextColumn::make('price')->money('INR', true)->sortable(),
+                TextColumn::make('price')->money('USD', true)->sortable(),
                 TextColumn::make('location')->sortable()->searchable(),
                 IconColumn::make('is_negotiable')->label('Negotiable')->boolean(),
                 IconColumn::make('is_delivery_available')->label('Delivery')->boolean(),
