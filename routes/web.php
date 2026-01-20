@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\Auth\SmsVerificationController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ListingController;
@@ -19,6 +20,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware('guest')->group(function () {
+    Route::post('/sms/send', [SmsVerificationController::class, 'send'])->name('sms.send');
+    Route::post('/sms/verify', [SmsVerificationController::class, 'verify'])->name('sms.verify');
+
     Route::get('/auth/{provider}/redirect', [SocialLoginController::class, 'redirect'])
         ->whereIn('provider', ['google', 'apple'])
         ->name('social.redirect');

@@ -47,4 +47,10 @@ return [
         'redirect' => env('APPLE_REDIRECT_URI'),
     ],
 
+    'twilio' => [
+        'sid' => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_FROM'),
+    ],
+
 ];
