@@ -14,8 +14,8 @@ class CategorySeeder extends Seeder
     {
         $categories = [
             [
-                'title' => 'Ball Pythons',
-                'slug' => 'ball-pythons',
+                'title' => 'Snakes',
+                'slug' => 'snakes',
                 'description' => 'Morphs, pairs, proven breeders',
                 
                 'image' => null,
@@ -23,8 +23,8 @@ class CategorySeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'title' => 'Corn Snakes',
-                'slug' => 'corn-snakes',
+                'title' => 'Spiders',
+                'slug' => 'spiders',
                 'description' => 'Pets, projects, hatchlings',
                 
                 'image' => null,
@@ -32,14 +32,22 @@ class CategorySeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'title' => 'Boas',
-                'slug' => 'boas',
+                'title' => 'Lizards',
+                'slug' => 'lizards',
                 'description' => 'Localities, morph combos, adults',
                 
                 'image' => null,
                 'sort_order' => 3,
                 'is_active' => true,
             ],
+            [
+                'title'=>'Scorpians',
+                'slug'=>'scorpians',
+                'description'=>'Localities, morph combos, adults',
+                'image'=>null,
+                'sort_order'=>4,
+                'is_active'=>true,
+            ]
         ];
 
         Category::withoutSyncingToSearch(function () use ($categories) {

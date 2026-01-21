@@ -273,17 +273,21 @@ export default function ListingShow({ listing }: ListingShowProps) {
                                 <span className="hidden sm:inline">Back</span>
                             </Link>
                             <div className="h-6 w-px bg-white/10" />
-                            <Link
-                                href={`/categories/${listing.category.slug}`}
-                                className="flex items-center gap-2"
-                            >
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400">
-                                    <Sparkles className="h-4 w-4 text-white" />
-                                </div>
-                                <span className="font-medium text-zinc-400 transition-colors hover:text-white">
+                            <div className="flex items-center gap-2 text-sm text-zinc-400">
+                                <Link
+                                    href={`/categories/${listing.category.slug}`}
+                                    className="flex items-center gap-2 font-medium transition-colors hover:text-white"
+                                >
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400">
+                                        <Sparkles className="h-4 w-4 text-white" />
+                                    </div>
                                     {listing.category.title}
+                                </Link>
+                                <span className="text-white/40">/</span>
+                                <span className="max-w-48 truncate font-semibold text-white sm:max-w-none">
+                                    {listing.title}
                                 </span>
-                            </Link>
+                            </div>
                         </div>
 
                         {/* Action Buttons */}
