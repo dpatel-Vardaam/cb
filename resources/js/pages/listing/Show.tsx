@@ -19,7 +19,6 @@ import { useState } from 'react';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { SnakeBadge } from '@/components/ui/snake-badge';
-import { US_STATES } from '@/data/states';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 
@@ -63,16 +62,8 @@ type ListingShowProps = {
     listing: Listing;
 };
 
-const STATE_NAME_MAP = US_STATES.reduce<Record<string, string>>((acc, s) => {
-    acc[s.code.toUpperCase()] = s.name;
-    return acc;
-}, {});
-
 const formatCityName = (city?: string | null) =>
     city ? city.replace(/[_-]/g, ' ') : '';
-
-const getStateName = (code?: string | null) =>
-    code ? (STATE_NAME_MAP[code.toUpperCase()] ?? code) : '';
 
 function ImageCarousel({ images, title }: { images: string[]; title: string }) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -413,21 +404,10 @@ export default function ListingShow({ listing }: ListingShowProps) {
                                             <p className="text-xs text-zinc-500">
                                                 Location
                                             </p>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-medium text-white">
-                                                    {formatCityName(
-                                                        listing.city,
-                                                    )}
-                                                </p>
-                                                <span className="text-lg text-white">
-                                                    •
-                                                </span>
-                                                <p className="font-medium text-white">
-                                                    {getStateName(
-                                                        listing.state,
-                                                    )}
-                                                </p>
-                                            </div>
+                                            <p className="font-medium text-white">
+                                                {formatCityName(listing.city)},{' '}
+                                                {listing.state}
+                                            </p>
                                         </div>
                                     </div>
 

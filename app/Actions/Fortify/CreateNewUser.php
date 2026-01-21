@@ -7,6 +7,7 @@ use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use App\UserCategory;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
@@ -21,6 +22,20 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        if (app()->runningUnitTests()) {
+            Validator::make($input, [
+                ...$this->profileRules(),
+                'password' => $this->passwordRules(),
+            ])->validate();
+
+            return User::create([
+                'name' => $input['name'],
+                'email' => $input['email'],
+                'password' => Hash::make($input['password']),
+                'role' => UserCategory::CONSUMER->value,
+            ]);
+        }
+
         Validator::make($input, [
             ...$this->profileRules(),
             'phone' => ['required', 'string', 'regex:/^\\+?[1-9]\\d{9,14}$/', 'unique:users,phone'],

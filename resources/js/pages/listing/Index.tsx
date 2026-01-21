@@ -8,7 +8,7 @@ import {
     Map,
     MapPin,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Header from '@/components/header';
 import LocationSelector from '@/components/location-selector'; // <--- IMPORT THIS
@@ -30,18 +30,9 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
-import { US_STATES } from '@/data/states';
-
-const STATE_NAME_MAP = US_STATES.reduce<Record<string, string>>((acc, s) => {
-    acc[s.code.toUpperCase()] = s.name;
-    return acc;
-}, {});
 
 const formatCityName = (city?: string | null) =>
     city ? city.replace(/[_-]/g, ' ') : '';
-
-const getStateName = (code?: string | null) =>
-    code ? (STATE_NAME_MAP[code.toUpperCase()] ?? code) : '';
 
 // ... (Your Listing type definition remains the same) ...
 export type Listing = {
@@ -113,7 +104,6 @@ type FilterContentProps = {
     categories: { id: number; title: string }[];
     updateField: (key: keyof FiltersState, value: string | boolean) => void;
     setForm: React.Dispatch<React.SetStateAction<FiltersState>>;
-    submitFilters: () => void;
     clearFilters: () => void;
 };
 
@@ -122,7 +112,6 @@ function FilterContent({
     categories,
     updateField,
     setForm,
-    submitFilters,
     clearFilters,
 }: FilterContentProps) {
     return (
@@ -136,9 +125,6 @@ function FilterContent({
                     onChange={(e) => updateField('q', e.target.value)}
                     placeholder="Search listings"
                     className="h-10 border-white/10 bg-[#0f0f15] text-white placeholder:text-zinc-500"
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') submitFilters();
-                    }}
                 />
             </div>
 
@@ -221,7 +207,6 @@ function FilterContent({
                             onClick={() => {
                                 updateField('min_price', '');
                                 updateField('max_price', String(ceil));
-                                submitFilters();
                             }}
                         >
                             Up to {'$'}
@@ -261,14 +246,8 @@ function FilterContent({
 
             <div className="flex gap-3">
                 <Button
-                    onClick={submitFilters}
-                    className="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25 hover:cursor-pointer"
-                >
-                    Apply
-                </Button>
-                <Button
                     onClick={clearFilters}
-                    className="flex-1 border-white/30 text-white hover:cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/10"
+                    className="w-full border border-white/30 bg-[#0f0f15] text-white hover:border-emerald-500/30 hover:bg-emerald-500/10"
                 >
                     Reset
                 </Button>
@@ -305,8 +284,11 @@ export default function ListingsIndex({
 }: ListingsIndexProps) {
     const page = usePage();
     const isMine = useMemo(() => page.url?.includes('mine=1'), [page.url]);
-console.log(listings);
     const [openFilters, setOpenFilters] = useState(false);
+
+    const isFirstFilterRender = useRef(true);
+    const skipNextAutoSubmit = useRef(false);
+    const autoSubmitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // 1. UPDATED STATE: Replaced 'location' with 'state' and 'city'
     const [form, setForm] = useState<FiltersState>({
@@ -345,11 +327,40 @@ console.log(listings);
             },
             { preserveScroll: true, preserveState: true },
         );
-        setOpenFilters(false);
     };
+
+    useEffect(() => {
+        if (isFirstFilterRender.current) {
+            isFirstFilterRender.current = false;
+            return;
+        }
+
+        if (skipNextAutoSubmit.current) {
+            skipNextAutoSubmit.current = false;
+            return;
+        }
+
+        if (autoSubmitTimer.current) {
+            clearTimeout(autoSubmitTimer.current);
+        }
+
+        autoSubmitTimer.current = setTimeout(() => {
+            submitFilters();
+        }, 200);
+
+        return () => {
+            if (autoSubmitTimer.current) {
+                clearTimeout(autoSubmitTimer.current);
+            }
+        };
+    }, [form]);
 
     // 3. UPDATED CLEAR: Resets state and city
     const clearFilters = () => {
+        skipNextAutoSubmit.current = true;
+        if (autoSubmitTimer.current) {
+            clearTimeout(autoSubmitTimer.current);
+        }
         setForm({
             q: '',
             category_id: 'all',
@@ -372,7 +383,6 @@ console.log(listings);
             },
             { preserveScroll: true, preserveState: true },
         );
-        setOpenFilters(false);
     };
 
     const cards = listings.data.map((listing) => {
@@ -438,7 +448,7 @@ console.log(listings);
                             {(hasListings || isMine) && (
                                 <Button
                                     asChild
-                                    className="border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/10"
+                                    className="border-none bg-transparent p-0 shadow-none hover:bg-transparent hover:text-inherit focus:bg-transparent focus-visible:ring-0 active:bg-transparent"
                                 >
                                     <Link
                                         href={
@@ -446,9 +456,9 @@ console.log(listings);
                                                 ? '/listings'
                                                 : '/listings?mine=1'
                                         }
-                                        className="flex items-center text-white"
+                                        className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-[#12121a] px-4 py-2 text-white transition hover:border-emerald-500/30 hover:bg-emerald-500/10"
                                     >
-                                        <ListChecks className="mr-2 h-4 w-4" />
+                                        <ListChecks className="h-4 w-4" />
                                         {isMine
                                             ? 'View Marketplace'
                                             : 'My Listings'}
@@ -487,7 +497,6 @@ console.log(listings);
                                     categories={categories}
                                     updateField={updateField}
                                     setForm={setForm}
-                                    submitFilters={submitFilters}
                                     clearFilters={clearFilters}
                                 />
                             </div>
@@ -502,7 +511,6 @@ console.log(listings);
                                 categories={categories}
                                 updateField={updateField}
                                 setForm={setForm}
-                                submitFilters={submitFilters}
                                 clearFilters={clearFilters}
                             />
                         </aside>
@@ -557,9 +565,7 @@ console.log(listings);
                                                     </span>
                                                     <span className="inline-flex items-center gap-1">
                                                         <MapPin className="h-4 w-4" />
-                                                        {getStateName(
-                                                            card.state,
-                                                        )}
+                                                        {card.state}
                                                     </span>
                                                 </div>
                                                 <span className="inline-flex items-center gap-1">
@@ -590,38 +596,34 @@ console.log(listings);
                             {/* Pagination */}
                             {listings.last_page > 1 && (
                                 <div className="flex items-center justify-center gap-4 pt-2">
-                                    {/* Previous Button */}
+                                    {/* Previous */}
                                     <Button
-                                        className="h-10 w-10 border-white/10 text-white hover:bg-white/10"
+                                        className="h-10 w-10 border border-white/10 bg-[#12121a] text-white hover:cursor-pointer hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
                                         disabled={!listings.prev_page_url}
-                                        asChild
+                                        onClick={() =>
+                                            listings.prev_page_url &&
+                                            router.visit(listings.prev_page_url)
+                                        }
                                     >
-                                        <Link
-                                            href={listings.prev_page_url ?? '#'}
-                                        >
-                                            <ArrowLeft className="h-4 w-4" />
-                                        </Link>
+                                        <ArrowLeft className="h-4 w-4" />
                                     </Button>
 
-                                    {/* --- CHANGED SECTION START --- */}
-                                    {/* Changed min-w-[40px] to w-auto px-4 to fit the extra text */}
-                                    <span className="flex h-10 w-auto items-center justify-center rounded-md bg-white/10 px-4 text-sm font-medium whitespace-nowrap">
+                                    {/* Page Info */}
+                                    <span className="flex h-10 items-center justify-center rounded-md bg-white/10 px-4 text-sm font-medium whitespace-nowrap">
                                         Page {listings.current_page} of{' '}
                                         {listings.last_page}
                                     </span>
-                                    {/* --- CHANGED SECTION END --- */}
 
-                                    {/* Next Button */}
+                                    {/* Next */}
                                     <Button
-                                        className="h-10 w-10 border-white/10 text-white hover:bg-white/10"
+                                        className="h-10 w-10 border border-white/10 bg-[#12121a] text-white hover:cursor-pointer hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
                                         disabled={!listings.next_page_url}
-                                        asChild
+                                        onClick={() =>
+                                            listings.next_page_url &&
+                                            router.visit(listings.next_page_url)
+                                        }
                                     >
-                                        <Link
-                                            href={listings.next_page_url ?? '#'}
-                                        >
-                                            <ArrowRight className="h-4 w-4" />
-                                        </Link>
+                                        <ArrowRight className="h-4 w-4" />
                                     </Button>
                                 </div>
                             )}

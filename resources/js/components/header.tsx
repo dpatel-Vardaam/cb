@@ -76,6 +76,22 @@ export default function Header() {
                     <Button
                         asChild
                         variant="ghost"
+                        className="hidden text-zinc-400 hover:bg-white/5 hover:text-white sm:inline-flex"
+                    >
+                        <Link href="/about">About</Link>
+                    </Button>
+
+                    <Button
+                        asChild
+                        variant="ghost"
+                        className="hidden text-zinc-400 hover:bg-white/5 hover:text-white sm:inline-flex"
+                    >
+                        <Link href="/contact">Contact</Link>
+                    </Button>
+
+                    <Button
+                        asChild
+                        variant="ghost"
                         className="text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
                     >
                         <Link

@@ -17,6 +17,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "meilisearch/meilisearch-php": "^1.16",
+        "spatie/laravel-settings": "^3.6",
         "spatie/laravel-sitemap": "^7.3",
         "twilio/sdk": "^8.3"
     },

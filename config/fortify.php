@@ -73,7 +73,11 @@ return [
     |
     */
 
-    'home' => '/',
+    'home' => '/dashboard',
+
+    'redirects' => [
+        'email-verification' => '/dashboard',
+    ],
 
     /*
     |--------------------------------------------------------------------------

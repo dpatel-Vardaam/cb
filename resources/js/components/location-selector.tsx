@@ -7,6 +7,7 @@ import { US_STATES } from '@/data/states';
 type OptionType = {
     value: string;
     label: string;
+    code?: string;
 };
 
 type LocationSelectorProps = {
@@ -29,7 +30,12 @@ export default function LocationSelector({
 
     // 2. Prepare State Options (Memoized for performance)
     const stateOptions: OptionType[] = useMemo(
-        () => US_STATES.map((s) => ({ value: s.code, label: s.name })),
+        () =>
+            US_STATES.map((s) => ({
+                value: s.name,
+                label: s.name,
+                code: s.code,
+            })),
         [],
     );
 
@@ -69,12 +75,13 @@ export default function LocationSelector({
     // 3. Initialize from Props (Run once on mount)
     useEffect(() => {
         if (initialState) {
-            // Find the full state object based on the code (e.g., "CA" -> "California")
-            const stateObj = stateOptions.find((s) => s.value === initialState);
+            const stateObj = stateOptions.find(
+                (s) => s.value === initialState || s.code === initialState,
+            );
             if (stateObj) {
                 setSelectedState(stateObj);
                 // Trigger city load
-                loadCities(stateObj.value, initialCity);
+                loadCities(stateObj.code ?? '', initialCity);
             }
         }
     }, [initialCity, initialState, loadCities, stateOptions]);
@@ -84,13 +91,14 @@ export default function LocationSelector({
         setSelectedCity(null); // Reset city
         setCityOptions([]); // Clear old cities
 
-        const newState = option ? option.value : '';
+        const newStateName = option ? option.value : '';
+        const newStateCode = option?.code ?? '';
 
         // Notify Parent
-        onLocationChange({ state: newState, city: '' });
+        onLocationChange({ state: newStateName, city: '' });
 
-        if (newState) {
-            loadCities(newState);
+        if (newStateCode) {
+            loadCities(newStateCode);
         }
     };
 

@@ -3,20 +3,11 @@ import { ArrowLeft, Clock, Heart, Map, MapPin } from 'lucide-react';
 
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { US_STATES } from '@/data/states';
 import { cn } from '@/lib/utils';
 import wishlists from '@/routes/wishlists';
 
-const STATE_NAME_MAP = US_STATES.reduce<Record<string, string>>((acc, s) => {
-    acc[s.code.toUpperCase()] = s.name;
-    return acc;
-}, {});
-
 const formatCityName = (city?: string | null) =>
     city ? city.replace(/[_-]/g, ' ') : '';
-
-const getStateName = (code?: string | null) =>
-    code ? (STATE_NAME_MAP[code.toUpperCase()] ?? code) : '';
 
 type Listing = {
     uuid: string;
@@ -220,9 +211,7 @@ export default function WishlistIndex({ listings = [] }: WishlistIndexProps) {
                                                     </span>
                                                     <span className="inline-flex items-center gap-1">
                                                         <MapPin className="h-4 w-4" />
-                                                        {getStateName(
-                                                            card.state,
-                                                        )}
+                                                        {card.state}
                                                     </span>
                                                 </div>
                                                 <span className="inline-flex items-center gap-1">

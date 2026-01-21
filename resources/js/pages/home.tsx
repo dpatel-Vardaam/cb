@@ -38,6 +38,8 @@ type Listing = {
     description: string;
     price: string;
     location: string;
+    state: string;
+    city: string;
     species: string | null;
     morph: string | null;
     age: string | null;
@@ -115,6 +117,8 @@ const Home = ({
             category: listing.category?.title ?? 'Uncategorized',
             price: parseFloat(listing.price),
             location: listing.location,
+            state: listing.state,
+            city: listing.city,
             posted: formatRelativeTime(listing.created_at),
             badges,
             image,

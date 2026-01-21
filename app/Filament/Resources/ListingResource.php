@@ -7,6 +7,7 @@ use App\Models\Listing;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -77,6 +78,30 @@ class ListingResource extends Resource
                             ->helperText('e.g., Pastel Clown Ball Python – 2024 Male')
                             ->columnSpan(2),
 
+                        Select::make('user_id')
+                            ->label('User')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->columnSpan(1),
+
+                        Select::make('category_id')
+                            ->label('Category')
+                            ->relationship('category', 'title')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->columnSpan(1),
+
+                        Select::make('species_id')
+                            ->label('Species')
+                            ->relationship('species', 'title')
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->columnSpan(2),
+
                         TextInput::make('price')
                             ->label('Price')
                             ->numeric()
@@ -84,11 +109,28 @@ class ListingResource extends Resource
                             ->prefix('$')
                             ->columnSpan(1),
 
-                        TextInput::make('location')
-                            ->label('Location')
+                        TextInput::make('state')
+                            ->label('State')
+                            ->required()
                             ->maxLength(255)
-                            ->placeholder('City, State')
                             ->columnSpan(1),
+
+                        TextInput::make('city')
+                            ->label('City')
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+
+                        Select::make('status')
+                            ->label('Status')
+                            ->options([
+                                'active' => 'Active',
+                                'sold' => 'Sold',
+                                'pending' => 'Pending',
+                                'draft' => 'Draft',
+                            ])
+                            ->required()
+                            ->columnSpan(2),
 
                         Textarea::make('description')
                             ->label('Description')
@@ -113,9 +155,11 @@ class ListingResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('title')->sortable()->searchable(),
+                TextColumn::make('user.name')->label('User')->sortable()->searchable(),
                 TextColumn::make('category.title')->label('Category')->sortable()->searchable(),
                 TextColumn::make('price')->money('USD', true)->sortable(),
-                TextColumn::make('location')->sortable()->searchable(),
+                TextColumn::make('state')->sortable()->searchable(),
+                TextColumn::make('city')->sortable()->searchable(),
                 IconColumn::make('is_negotiable')->label('Negotiable')->boolean(),
                 IconColumn::make('is_delivery_available')->label('Delivery')->boolean(),
                 TextColumn::make('status')->sortable()->badge(),
@@ -124,12 +168,14 @@ class ListingResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('category')->relationship('category', 'title'),
+                SelectFilter::make('user')->relationship('user', 'name')->searchable()->preload(),
                 TernaryFilter::make('is_negotiable')->label('Negotiable')->native(false),
                 TernaryFilter::make('is_delivery_available')->label('Delivery')->native(false),
                 SelectFilter::make('status')->options([
                     'active' => 'Active',
+                    'sold' => 'Sold',
+                    'pending' => 'Pending',
                     'draft' => 'Draft',
-                    'archived' => 'Archived',
                 ]),
             ])
             ->actions([

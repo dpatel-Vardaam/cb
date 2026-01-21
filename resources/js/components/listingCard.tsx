@@ -14,6 +14,8 @@ interface ListingCardProps {
     category: string;
     price: number;
     location: string;
+    state: string;
+    city: string;
     posted: string;
     image?: string | null;
     badges?: string[];
@@ -37,6 +39,8 @@ export function ListingCard({
     category,
     price,
     location,
+    state,
+    city,
     posted,
     image,
     badges = [],
@@ -126,7 +130,7 @@ export function ListingCard({
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <MapPin className="h-3.5 w-3.5" />
-                                        {location}
+                                        {city}, {state}
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <Clock className="h-3.5 w-3.5" />

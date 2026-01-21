@@ -54,7 +54,7 @@ export default function Profile({
                     </div>
 
                     {/* 2. Main Profile Card (Glassmorphism) */}
-                    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#12121a]/80 p-6 shadow-lg shadow-emerald-500/5 backdrop-blur-md transition-all duration-500 hover:-translate-y-0.5 hover:border-emerald-500/30 hover:shadow-emerald-500/15">
+                    <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[#12121a]/80 p-6 shadow-lg shadow-emerald-500/5 backdrop-blur-md transition-all duration-500 hover:-translate-y-0.5 hover:border-emerald-500/30 hover:shadow-emerald-500/15">
                         {/* Glow Effect */}
                         <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-emerald-500/10 opacity-50 blur-3xl" />
 
@@ -71,68 +71,102 @@ export default function Profile({
                                         value={removePhoto ? '1' : '0'}
                                     />
 
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-                                        <Avatar className="h-20 w-20 border-2 border-white/10">
-                                            <AvatarImage
-                                                src={photoPreview ?? undefined}
-                                                alt={auth.user.name}
-                                            />
-                                            <AvatarFallback className="bg-linear-to-br from-emerald-400 to-cyan-400 text-lg font-semibold text-white">
-                                                {auth.user.name
-                                                    .charAt(0)
-                                                    .toUpperCase()}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f0f15]/60 p-6">
+                                        <div className="pointer-events-none absolute -top-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+                                        <div className="pointer-events-none absolute -bottom-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
 
-                                        <div className="flex-1 space-y-2">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            name="profile_photo"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const file =
+                                                    e.target.files?.[0];
+                                                if (!file) return;
+
+                                                setRemovePhoto(false);
+                                                if (photoObjectUrl) {
+                                                    URL.revokeObjectURL(
+                                                        photoObjectUrl,
+                                                    );
+                                                }
+
+                                                const url =
+                                                    URL.createObjectURL(file);
+                                                setPhotoObjectUrl(url);
+                                                setPhotoPreview(url);
+                                            }}
+                                        />
+
+                                        <div className="relative z-10 flex flex-col items-center gap-4 text-center">
+                                            <button
+                                                type="button"
+                                                className="group relative"
+                                                onClick={() =>
+                                                    fileInputRef.current?.click()
+                                                }
+                                            >
+                                                <div className="absolute inset-0 rounded-full bg-linear-to-br from-emerald-400 to-cyan-400 opacity-35 blur-xl transition-opacity group-hover:opacity-55" />
+                                                <Avatar className="relative h-36 w-36 border-2 border-white/10 ring-4 ring-emerald-500/10 transition-all group-hover:border-emerald-500/30 group-hover:ring-emerald-500/20">
+                                                    <AvatarImage
+                                                        src={
+                                                            photoPreview ??
+                                                            undefined
+                                                        }
+                                                        alt={auth.user.name}
+                                                    />
+                                                    <AvatarFallback className="bg-linear-to-br from-emerald-400 to-cyan-400 text-3xl font-semibold text-white">
+                                                        {auth.user.name
+                                                            .charAt(0)
+                                                            .toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+
+                                                <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-sm font-medium text-white opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
+                                                    Click to upload
+                                                </div>
+                                            </button>
+
                                             <div>
                                                 <p className="text-sm font-medium text-white">
                                                     Profile photo
                                                 </p>
-                                                <p className="text-xs text-zinc-500">
+                                                <p className="mt-1 text-xs text-zinc-500">
                                                     PNG/JPG up to 2MB.
                                                 </p>
                                             </div>
 
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <input
-                                                    ref={fileInputRef}
-                                                    type="file"
-                                                    name="profile_photo"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => {
-                                                        const file =
-                                                            e.target.files?.[0];
-                                                        if (!file) return;
-
-                                                        setRemovePhoto(false);
-                                                        if (photoObjectUrl) {
-                                                            URL.revokeObjectURL(
-                                                                photoObjectUrl,
-                                                            );
-                                                        }
-
-                                                        const url =
-                                                            URL.createObjectURL(
-                                                                file,
-                                                            );
-                                                        setPhotoObjectUrl(url);
-                                                        setPhotoPreview(url);
-                                                    }}
-                                                />
+                                            <div className="grid w-full gap-3 sm:max-w-lg sm:grid-cols-[1fr_auto] sm:items-center">
+                                                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left">
+                                                    <p className="text-xs tracking-[0.2em] text-emerald-400 uppercase">
+                                                        Listings
+                                                    </p>
+                                                    <p className="mt-1 text-2xl font-bold text-white">
+                                                        {auth.user
+                                                            .listings_count ??
+                                                            0}
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-zinc-500">
+                                                        Total active listings
+                                                        posted by you.
+                                                    </p>
+                                                </div>
 
                                                 <Button
+                                                    asChild
                                                     type="button"
                                                     variant="secondary"
                                                     className="border-white/10 bg-white/5 text-white hover:border-emerald-500/30 hover:bg-emerald-500/10"
-                                                    onClick={() =>
-                                                        fileInputRef.current?.click()
-                                                    }
                                                 >
-                                                    Upload
+                                                    <Link href="/listings?mine=1">
+                                                        View my listings
+                                                    </Link>
                                                 </Button>
+                                            </div>
 
+                                            <div className="flex items-center gap-2">
                                                 {photoPreview && (
                                                     <Button
                                                         type="button"
@@ -180,51 +214,53 @@ export default function Profile({
                                         </div>
                                     </div>
 
-                                    {/* Name */}
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="name"
-                                            className="text-zinc-300"
-                                        >
-                                            Name
-                                        </Label>
-                                        <Input
-                                            id="name"
-                                            className="border-white/10 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
-                                            defaultValue={auth.user.name}
-                                            name="name"
-                                            required
-                                            autoComplete="name"
-                                            placeholder="Full name"
-                                        />
-                                        <InputError
-                                            className="mt-2"
-                                            message={errors.name}
-                                        />
-                                    </div>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {/* Name */}
+                                        <div className="grid gap-2">
+                                            <Label
+                                                htmlFor="name"
+                                                className="text-zinc-300"
+                                            >
+                                                Name
+                                            </Label>
+                                            <Input
+                                                id="name"
+                                                className="border-white/10 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                                                defaultValue={auth.user.name}
+                                                name="name"
+                                                required
+                                                autoComplete="name"
+                                                placeholder="Full name"
+                                            />
+                                            <InputError
+                                                className="mt-2"
+                                                message={errors.name}
+                                            />
+                                        </div>
 
-                                    {/* Email */}
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="email"
-                                            className="text-zinc-300"
-                                        >
-                                            Email address
-                                        </Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            className="border-white/10 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
-                                            defaultValue={auth.user.email}
-                                            name="email"
-                                            required
-                                            autoComplete="username"
-                                            placeholder="Email address"
-                                        />
-                                        <InputError
-                                            className="mt-2"
-                                            message={errors.email}
-                                        />
+                                        {/* Email */}
+                                        <div className="grid gap-2">
+                                            <Label
+                                                htmlFor="email"
+                                                className="text-zinc-300"
+                                            >
+                                                Email address
+                                            </Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                className="border-white/10 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                                                defaultValue={auth.user.email}
+                                                name="email"
+                                                required
+                                                autoComplete="username"
+                                                placeholder="Email address"
+                                            />
+                                            <InputError
+                                                className="mt-2"
+                                                message={errors.email}
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Verification Notice */}

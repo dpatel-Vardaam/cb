@@ -32,9 +32,6 @@ class ListingController extends Controller
         if ($request->filled('category_id') && $request->category_id !== 'all') {
             $filters[] = "category_id = {$request->category_id}";
         }
-        if ($request->filled('location')) {
-            $filters[] = "location = \"{$request->location}\"";
-        }
         if ($request->filled('state')) {
             $filters[] = "state = \"{$request->state}\"";
         }
@@ -70,7 +67,7 @@ class ListingController extends Controller
         return Inertia::render('listing/Index', [
             'listings' => $listings,
             'filters' => $request->only([
-                'q', 'category_id', 'location', 'state', 'city',
+                'q', 'category_id', 'state', 'city',
                 'min_price', 'max_price', 'negotiable', 'delivery', 'mine',
             ]),
             'categories' => $categories,
@@ -195,7 +192,6 @@ class ListingController extends Controller
             'category_id' => 'required|exists:categories,id',
             'description' => 'required|string|max:5000',
             'price' => 'required|numeric|min:0|max:9999999.99',
-            'location' => 'required|string|max:255',
             'state' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'species' => 'nullable|string|max:255',
