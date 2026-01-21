@@ -23,6 +23,10 @@ class ListingController extends Controller
             $filters[] = "user_id = {$request->user()->id}";
         } else {
             $filters[] = 'status = active';
+            // NEW: Exclude the current user's listings from the marketplace
+            if ($request->user()) {
+                $filters[] = "user_id != '{$request->user()->id}'";
+            }
         }
 
         if ($request->filled('category_id') && $request->category_id !== 'all') {
@@ -57,9 +61,12 @@ class ListingController extends Controller
                 'filter' => implode(' AND ', $filters),
             ]);
         }
-
         $listings = $query->paginate(12);
         $categories = Category::orderBy('title', 'asc')->get(['id', 'title']);
+        $hasListings = $request->user() 
+        ? $request->user()->listings()->exists() 
+        : false;
+
         return Inertia::render('listing/Index', [
             'listings' => $listings,
             'filters' => $request->only([
@@ -67,6 +74,7 @@ class ListingController extends Controller
                 'min_price', 'max_price', 'negotiable', 'delivery', 'mine',
             ]),
             'categories' => $categories,
+            'hasListings' => $hasListings,
         ]);
     }
 

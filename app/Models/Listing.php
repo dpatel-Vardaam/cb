@@ -15,6 +15,7 @@ class Listing extends Model
         'id',
         'user_id',
         'category_id',
+        'species_id',
         'title',
         'slug',
         'description',
@@ -60,6 +61,7 @@ class Listing extends Model
             // 🔥 FILTERABLE FIELDS (TOP-LEVEL ONLY)
             'status' => $this->status,
             'category_id' => (string) $this->category_id,
+            'species_id' => (string) $this->species_id,
             'user_id' => (string) $this->user_id,
             'is_negotiable' => (bool) $this->is_negotiable,
             'is_delivery_available' => (bool) $this->is_delivery_available,
@@ -80,10 +82,17 @@ class Listing extends Model
             if (empty($listing->id)) {
                 $listing->id = Str::uuid()->toString();
             }
-            $baseSlug = Str::slug($listing->title);
-            $listing->slug = $baseSlug . '-' . strtolower(Str::random(6));
+
+            // --- FIX STARTS HERE ---
+            // Only generate a random slug if the seeder/controller didn't provide one
+            if (empty($listing->slug)) {
+                $baseSlug = Str::slug($listing->title);
+                $listing->slug = $baseSlug.'-'.strtolower(Str::random(6));
+            }
+            // --- FIX ENDS HERE ---
         });
     }
+
     public function getRouteKeyName()
     {
         return 'slug';
@@ -99,6 +108,11 @@ class Listing extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function species(): BelongsTo
+    {
+        return $this->belongsTo(Species::class);
+    }
+
     public function getImageUrlsAttribute(): array
     {
         if (empty($this->images)) {
@@ -106,7 +120,7 @@ class Listing extends Model
         }
 
         return array_map(function ($image) {
-            return '/storage/listings/'.$this->id.'/'.$image;
+            return '/storage/listings/'.$this->slug.'/'.$image;
         }, $this->images);
     }
 
@@ -114,12 +128,13 @@ class Listing extends Model
     {
         return (string) $this->id;
     }
+
     public function getSeoUrlAttribute(): string
     {
         // Safe navigators provided just in case data is missing
         $state = Str::slug($this->state ?? 'unknown-state');
         $city = Str::slug($this->city ?? 'unknown-city');
-        
+
         // Ensure category relationship is loaded or handle gracefully
         $category = $this->category?->slug
             ?: ($this->category ? Str::slug($this->category->title) : 'reptiles');

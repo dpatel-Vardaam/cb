@@ -50,7 +50,10 @@ class Category extends Model
 
     public function toSearchableArray(): array
     {
-        $this->loadMissing('listings:id,category_id,title,state,city,species');
+        $this->loadMissing([
+            'listings:id,category_id,species_id,title,state,city',
+            'listings.species:id,title',
+        ]);
 
         return [
             'id' => $this->id,
@@ -60,7 +63,7 @@ class Category extends Model
                 'title' => $listing->title,
                 'state' => $listing->state,
                 'city' => $listing->city,
-                'species' => $listing->species,
+                'species' => optional($listing->species)->title,
             ])->all(),
         ];
     }

@@ -1,12 +1,14 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ChevronRight, Clock, Heart, MapPin } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { SnakeBadge } from '@/components/ui/snake-badge';
 import { cn } from '@/lib/utils';
+import wishlists from '@/routes/wishlists';
 
 interface ListingCardProps {
+    id: string;
     title: string;
     url: string;
     category: string;
@@ -16,6 +18,7 @@ interface ListingCardProps {
     image?: string | null;
     badges?: string[];
     className?: string;
+    isWishlisted?: boolean;
 }
 
 function getBadgeVariant(badge: string) {
@@ -28,6 +31,7 @@ function getBadgeVariant(badge: string) {
 }
 
 export function ListingCard({
+    id,
     title,
     url,
     category,
@@ -37,8 +41,42 @@ export function ListingCard({
     image,
     badges = [],
     className,
+    isWishlisted = false,
 }: ListingCardProps) {
-    const [isLiked, setIsLiked] = useState(false);
+    const [isLiked, setIsLiked] = useState(isWishlisted);
+
+    useEffect(() => {
+        setIsLiked(isWishlisted);
+    }, [isWishlisted]);
+
+    const toggleWishlist = (e: React.MouseEvent) => {
+        e.preventDefault(); // Prevent triggering the parent Link if wrapped in one
+        e.stopPropagation();
+
+        // 1. Optimistic UI Update (Immediate visual feedback)
+        const previousState = isLiked;
+        const nextState = !isLiked;
+        setIsLiked(nextState);
+
+        // 2. Send request to backend
+        const options = {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                // Optional: Toast notification here
+            },
+            onError: () => {
+                setIsLiked(previousState);
+            },
+        };
+
+        if (nextState) {
+            router.post(wishlists.store().url, { listing_id: id }, options);
+            return;
+        }
+
+        router.delete(wishlists.destroy(id).url, options);
+    };
     return (
         <div
             className={cn(
@@ -99,7 +137,7 @@ export function ListingCard({
 
                             <div className="flex shrink-0 flex-col items-end gap-2">
                                 <button
-                                    onClick={() => setIsLiked(!isLiked)}
+                                    onClick={toggleWishlist}
                                     className={cn(
                                         'flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-300',
                                         isLiked

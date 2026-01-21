@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, LogOut, Settings, Sparkles } from 'lucide-react';
+import {
+    Heart,
+    LayoutDashboard,
+    LogOut,
+    Settings,
+    Sparkles,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { home, login, register } from '@/routes';
@@ -67,74 +73,90 @@ export default function Header() {
 
                 {/* Right nav */}
                 <nav className="flex items-center gap-3">
+                    <Button
+                        asChild
+                        variant="ghost"
+                        className="text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
+                    >
+                        <Link
+                            href="/wishlists"
+                            className="flex items-center gap-2"
+                        >
+                            <Heart className="h-4 w-4" />
+                            <span>Wishlist</span>
+                        </Link>
+                    </Button>
+
                     {auth.user ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="group relative flex h-10 w-10 items-center justify-center rounded-full ring-2 ring-transparent transition-all hover:ring-emerald-500/50 focus:ring-emerald-500/50 focus:outline-none">
-                                    <Avatar className="h-10 w-10 border-2 border-white/10 transition-all group-hover:border-emerald-500/30">
-                                        <AvatarImage
-                                            src={auth.user.avatar}
-                                            alt={auth.user.name}
-                                        />
-                                        <AvatarFallback className="bg-linear-to-br from-emerald-400 to-cyan-400 text-sm font-semibold text-white">
-                                            {auth.user.name
-                                                .charAt(0)
-                                                .toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </button>
-                            </DropdownMenuTrigger>
+                        <>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="group relative flex h-10 w-10 items-center justify-center rounded-full ring-2 ring-transparent transition-all hover:ring-emerald-500/50 focus:ring-emerald-500/50 focus:outline-none">
+                                        <Avatar className="h-10 w-10 border-2 border-white/10 transition-all group-hover:border-emerald-500/30">
+                                            <AvatarImage
+                                                src={auth.user.avatar}
+                                                alt={auth.user.name}
+                                            />
+                                            <AvatarFallback className="bg-linear-to-br from-emerald-400 to-cyan-400 text-sm font-semibold text-white">
+                                                {auth.user.name
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </button>
+                                </DropdownMenuTrigger>
 
-                            <DropdownMenuContent
-                                align="end"
-                                className="w-56 border-white/10 bg-[#12121a]/95 backdrop-blur-xl"
-                            >
-                                <div className="px-3 py-2">
-                                    <p className="text-sm font-medium text-white">
-                                        {auth.user.name}
-                                    </p>
-                                    <p className="text-xs text-zinc-500">
-                                        {auth.user.email}
-                                    </p>
-                                </div>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="w-56 border-white/10 bg-[#12121a]/95 backdrop-blur-xl"
+                                >
+                                    <div className="px-3 py-2">
+                                        <p className="text-sm font-medium text-white">
+                                            {auth.user.name}
+                                        </p>
+                                        <p className="text-xs text-zinc-500">
+                                            {auth.user.email}
+                                        </p>
+                                    </div>
 
-                                <DropdownMenuSeparator className="bg-white/10" />
+                                    <DropdownMenuSeparator className="bg-white/10" />
 
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/listings?mine=1"
-                                        className="flex items-center gap-2 text-zinc-300 hover:text-white focus:bg-white/5"
-                                    >
-                                        <LayoutDashboard className="h-4 w-4" />
-                                        My Listings
-                                    </Link>
-                                </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/listings?mine=1"
+                                            className="flex items-center gap-2 text-zinc-300 hover:text-white focus:bg-white/5"
+                                        >
+                                            <LayoutDashboard className="h-4 w-4" />
+                                            My Listings
+                                        </Link>
+                                    </DropdownMenuItem>
 
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/settings/profile"
-                                        className="flex items-center gap-2 text-zinc-300 hover:text-white focus:bg-white/5"
-                                    >
-                                        <Settings className="h-4 w-4" />
-                                        Settings
-                                    </Link>
-                                </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/settings/profile"
+                                            className="flex items-center gap-2 text-zinc-300 hover:text-white focus:bg-white/5"
+                                        >
+                                            <Settings className="h-4 w-4" />
+                                            Settings
+                                        </Link>
+                                    </DropdownMenuItem>
 
-                                <DropdownMenuSeparator className="bg-white/10" />
+                                    <DropdownMenuSeparator className="bg-white/10" />
 
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/logout"
-                                        method="post"
-                                        as="button"
-                                        className="flex w-full items-center gap-2 text-red-400 hover:text-red-300 focus:bg-white/5"
-                                    >
-                                        <LogOut className="h-4 w-4" />
-                                        Log out
-                                    </Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/logout"
+                                            method="post"
+                                            as="button"
+                                            className="flex w-full items-center gap-2 text-red-400 hover:text-red-300 focus:bg-white/5"
+                                        >
+                                            <LogOut className="h-4 w-4" />
+                                            Log out
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </>
                     ) : (
                         <>
                             <Button

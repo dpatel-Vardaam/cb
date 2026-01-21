@@ -94,6 +94,7 @@ type ListingsIndexProps = {
     listings: PaginatedResponse<Listing>;
     categories: { id: number; title: string }[];
     filters?: Record<string, unknown>;
+    hasListings: boolean;
 };
 
 type FiltersState = {
@@ -300,10 +301,11 @@ export default function ListingsIndex({
     listings,
     categories,
     filters = {},
+    hasListings,
 }: ListingsIndexProps) {
     const page = usePage();
     const isMine = useMemo(() => page.url?.includes('mine=1'), [page.url]);
-
+console.log(listings);
     const [openFilters, setOpenFilters] = useState(false);
 
     // 1. UPDATED STATE: Replaced 'location' with 'state' and 'city'
@@ -381,7 +383,7 @@ export default function ListingsIndex({
         const coverImage =
             listing.image_urls?.[0] ||
             (listing.images?.[0]
-                ? `/storage/listings/${listing.uuid}/${listing.images[0]}`
+                ? `/storage/listings/${listing.slug}/${listing.images[0]}`
                 : undefined);
 
         return {
@@ -433,24 +435,26 @@ export default function ListingsIndex({
 
                         <div className="flex items-center gap-2">
                             {/* ... Buttons ... */}
-                            <Button
-                                asChild
-                                className="border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/10"
-                            >
-                                <Link
-                                    href={
-                                        isMine
-                                            ? '/listings'
-                                            : '/listings?mine=1'
-                                    }
-                                    className="flex items-center text-white"
+                            {(hasListings || isMine) && (
+                                <Button
+                                    asChild
+                                    className="border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/10"
                                 >
-                                    <ListChecks className="mr-2 h-4 w-4" />
-                                    {isMine
-                                        ? 'View Marketplace'
-                                        : 'My Listings'}
-                                </Link>
-                            </Button>
+                                    <Link
+                                        href={
+                                            isMine
+                                                ? '/listings'
+                                                : '/listings?mine=1'
+                                        }
+                                        className="flex items-center text-white"
+                                    >
+                                        <ListChecks className="mr-2 h-4 w-4" />
+                                        {isMine
+                                            ? 'View Marketplace'
+                                            : 'My Listings'}
+                                    </Link>
+                                </Button>
+                            )}
 
                             <Button
                                 asChild
@@ -586,6 +590,7 @@ export default function ListingsIndex({
                             {/* Pagination */}
                             {listings.last_page > 1 && (
                                 <div className="flex items-center justify-center gap-4 pt-2">
+                                    {/* Previous Button */}
                                     <Button
                                         className="h-10 w-10 border-white/10 text-white hover:bg-white/10"
                                         disabled={!listings.prev_page_url}
@@ -598,10 +603,15 @@ export default function ListingsIndex({
                                         </Link>
                                     </Button>
 
-                                    <span className="flex h-10 min-w-[40px] items-center justify-center rounded-md bg-white/10 text-sm font-medium">
-                                        {listings.current_page}
+                                    {/* --- CHANGED SECTION START --- */}
+                                    {/* Changed min-w-[40px] to w-auto px-4 to fit the extra text */}
+                                    <span className="flex h-10 w-auto items-center justify-center rounded-md bg-white/10 px-4 text-sm font-medium whitespace-nowrap">
+                                        Page {listings.current_page} of{' '}
+                                        {listings.last_page}
                                     </span>
+                                    {/* --- CHANGED SECTION END --- */}
 
+                                    {/* Next Button */}
                                     <Button
                                         className="h-10 w-10 border-white/10 text-white hover:bg-white/10"
                                         disabled={!listings.next_page_url}

@@ -2,21 +2,11 @@ import { Head } from '@inertiajs/react';
 
 import AppearanceTabs from '@/components/appearance-tabs';
 import HeadingSmall from '@/components/heading-small';
-import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { edit as editAppearance } from '@/routes/appearance';
-import { type BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Appearance settings',
-        href: editAppearance().url,
-    },
-];
 
 export default function Appearance() {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Appearance settings" />
 
             <h1 className="sr-only">Appearance Settings</h1>
@@ -27,9 +17,11 @@ export default function Appearance() {
                         title="Appearance settings"
                         description="Update your account's appearance settings"
                     />
-                    <AppearanceTabs />
+                    <div className="rounded-2xl border border-white/10 bg-[#12121a]/80 p-6 shadow-lg shadow-emerald-500/5 backdrop-blur-md">
+                        <AppearanceTabs />
+                    </div>
                 </div>
             </SettingsLayout>
-        </AppLayout>
+        </>
     );
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Listing;
 use App\Models\Category;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Features;
 use Illuminate\Support\Facades\Storage;
@@ -34,8 +35,15 @@ class HomeController extends Controller
 
         // Check if authenticated user has any listings
         $userHasListings = false;
+        $wishlistedListingIds = [];
         if ($request->user()) {
-            $userHasListings = Listing::where('user_id', $request->user()->id)->exists();
+            $userHasListings = Listing::where('user_id', '=', (string) $request->user()->id)->exists();
+            $wishlistedListingIds = Wishlist::query()
+                ->where('user_id', (string) $request->user()->id)
+                ->pluck('listing_id')
+                ->map(fn ($id) => (string) $id)
+                ->values()
+                ->all();
         }
 
         return Inertia::render('home', [
@@ -43,6 +51,7 @@ class HomeController extends Controller
             'categories' => $categories,
             'listings' => $listings,
             'userHasListings' => $userHasListings,
+            'wishlistedListingIds' => $wishlistedListingIds,
         ]);
     }
 }

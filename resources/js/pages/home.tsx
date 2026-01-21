@@ -17,6 +17,10 @@ import Header from '@/components/header';
 import { ListingCard } from '@/components/listingCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
+
+
 
 type CategoryItem = {
     id: string;
@@ -44,7 +48,8 @@ type Listing = {
     is_delivery_available: boolean;
     created_at: string;
     image_urls?: string[];
-    seo_url?: string; // <--- ADDED THIS (matches Laravel $appends)
+    seo_url?: string;
+    slug?: string; // <--- ADDED THIS (matches Laravel $appends)
     user?: {
         id: number;
         name: string;
@@ -56,8 +61,6 @@ type Listing = {
     };
 };
 
-
-
 const stats = [
     { icon: Users, label: 'Active Sellers', value: '2,500+' },
     { icon: TrendingUp, label: 'Listings', value: '15,000+' },
@@ -68,12 +71,14 @@ type HomeProps = {
     categories: CategoryItem[];
     listings: Listing[];
     userHasListings?: boolean;
+    wishlistedListingIds?: string[];
 };
 
 const Home = ({
     categories,
     listings = [],
     userHasListings = false,
+    wishlistedListingIds = [],
 }: HomeProps) => {
     // Helper to format relative time
     const formatRelativeTime = (dateString: string) => {
@@ -90,6 +95,7 @@ const Home = ({
     };
 
     // Transform listings to ListingCard format
+    const wishlistedSet = new Set(wishlistedListingIds);
     const transformedListings = listings.map((listing) => {
         const badges: string[] = [];
         if (listing.is_negotiable) badges.push('Negotiable');
@@ -97,11 +103,12 @@ const Home = ({
 
         const imageName = listing.images?.[0];
         const image = imageName
-            ? `/storage/listings/${listing.uuid}/${imageName}`
+            ? `/storage/listings/${listing.slug}/${imageName}`
             : undefined;
 
         return {
             uuid: listing.uuid,
+            id: listing.uuid,
             // Use the SEO URL from backend, fallback to old structure if missing
             url: listing.seo_url ?? '#',
             title: listing.title,
@@ -111,6 +118,7 @@ const Home = ({
             posted: formatRelativeTime(listing.created_at),
             badges,
             image,
+            isWishlisted: wishlistedSet.has(listing.uuid),
         };
     });
 
@@ -283,24 +291,49 @@ const Home = ({
                             </div>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {categories.map((cat, index) => (
-                                <div
-                                    key={cat.title}
-                                    className="animate-in duration-700 fade-in slide-in-from-bottom-2"
-                                    style={{
-                                        animationDelay: `${index * 100}ms`,
-                                    }}
-                                >
-                                    <CategoryCard
-                                        title={cat.title}
-                                        slug={cat.slug}
-                                        description={cat.description ?? ''}
-                                        image={cat.image ?? undefined}
-                                    />
-                                </div>
-                            ))}
-                        </div>
+                        <Carousel
+                            opts={{
+                                align: 'start',
+                                slidesToScroll: 1,
+                                loop: true,
+                            }}
+                            plugins={[
+                                Autoplay({
+                                    delay: 3000, // ⏱ auto rotate every 3s
+                                    stopOnInteraction: false, // keep autoplay after manual swipe
+                                    stopOnMouseEnter: true, // pause on hover (recommended)
+                                }),
+                            ]}
+                            className="w-full"
+                        >
+                            <CarouselContent className="-ml-4">
+                                {categories.map((cat, index) => (
+                                    <CarouselItem
+                                        key={cat.title}
+                                        className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3"
+                                    >
+                                        <div
+                                            className="animate-in duration-700 fade-in slide-in-from-bottom-2"
+                                            style={{
+                                                animationDelay: `${index * 100}ms`,
+                                            }}
+                                        >
+                                            <CategoryCard
+                                                title={cat.title}
+                                                slug={cat.slug}
+                                                description={
+                                                    cat.description ?? ''
+                                                }
+                                                image={cat.image ?? undefined}
+                                            />
+                                        </div>
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+
+                            <CarouselPrevious />
+                            <CarouselNext />
+                        </Carousel>
                     </section>
 
                     {/* Separator */}
